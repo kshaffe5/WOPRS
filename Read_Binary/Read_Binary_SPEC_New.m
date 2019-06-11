@@ -153,9 +153,29 @@ for i = 1:filenums
     disp('Processing...')
     
     while feof(fid)==0 && endfile == 0 
-        [year,month, wkday,day, hour, minute, second, millisec, data]=readRecord(fid);         
-        timebuffer = [year,month,day, hour, minute, second, millisec];
-        [year1,month1, wkday1,day1, hour1, minute1, second1, millisec1, data1]=readRecord(fid);
+        
+        year=fread(fid,1,'uint16');
+        month=fread(fid,1,'uint16');
+        wkday=fread(fid,1,'uint16');
+        day=fread(fid,1,'uint16');
+        hour=fread(fid,1,'uint16');
+        minute=fread(fid,1,'uint16');
+        second=fread(fid,1,'uint16');
+        millisec=fread(fid,1,'uint16');
+        data = fread(fid,2048,'uint16');
+        discard=fread(fid,1,'uint16');
+
+        year1=fread(fid,1,'uint16');
+        month1=fread(fid,1,'uint16');
+        wkday1=fread(fid,1,'uint16');
+        day1=fread(fid,1,'uint16');
+        hour1=fread(fid,1,'uint16');
+        minute1=fread(fid,1,'uint16');
+        second1=fread(fid,1,'uint16');
+        millisec1=fread(fid,1,'uint16');
+        data1 = fread(fid,2048,'uint16');
+        discard=fread(fid,1,'uint16');
+        
         datan=[data' data1'];
         datan=datan';
         
@@ -185,7 +205,7 @@ for i = 1:filenums
             netcdf.putVar ( f0, var6, kk0-1, 1, millisec );
             netcdf.putVar ( f0, var7, kk0-1, 1, wkday );
             
-            % See lines 53-102 or the SPEC manual for the full names of
+            % See lines 56-105 or the SPEC manual for the full names of
             % these variables.
             netcdf.putVar ( f0, var8, kk0-1, 1, HK.HE0V );
             netcdf.putVar ( f0, var9, kk0-1, 1, HK.HE64V );
@@ -301,19 +321,6 @@ end
 fclose(fid);
 end
 
-function [year,month, wkday,day, hour, minute, second, millisec, data]=readRecord(fid)
-
-        year=fread(fid,1,'uint16');
-        month=fread(fid,1,'uint16');
-        wkday=fread(fid,1,'uint16');
-        day=fread(fid,1,'uint16');
-        hour=fread(fid,1,'uint16');
-        minute=fread(fid,1,'uint16');
-        second=fread(fid,1,'uint16');
-        millisec=fread(fid,1,'uint16');
-        data = fread(fid,2048,'uint16');
-        discard=fread(fid,1,'uint16');
-end
 
 function [imgH, imgV, HK, HKon]=get_img(buf, timehhmmss,outfilename)
 
