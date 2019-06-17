@@ -3,12 +3,13 @@ function Read_Binary_PMS_New(infilename,outfilename,probetype)
 %%
 %% Read the raw .2d file, and then write into NETCDF file 
 %%
-%% 'kk' is used to update the user on the amount of data that is being 
-%% saved to the output file and 'jj' is how much data is being skipped.
+%% 'assigned_data' is a count of the data that being assigned to the output
+%% file. 'skipped_data' is data that is from a different probetype, and 
+%% thus it gets skipped over and not assigned to the output file.
 %%
 %% Manual: https://www.eol.ucar.edu/content/pms-2d-raw-data-format
 %%
-%% Edited by Kevin Shaffer 6/10/2019
+%% Edited by Kevin Shaffer 6/17/2019
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -53,30 +54,11 @@ for i = 1:filenums
     
     
     fid=fopen(infilename,'r','b');
-    
-    
-    % Create the output file
-    f = netcdf.create(outfilename1, 'clobber');
-    
-    dimid0 = netcdf.defDim(f,'time',netcdf.getConstant('NC_UNLIMITED'));
-    dimid1 = netcdf.defDim(f,'ImgRowlen',4);
-    dimid2 = netcdf.defDim(f,'ImgBlocklen',1024);
-    
-    varid0 = netcdf.defVar(f,'year','short',dimid0);
-    varid1 = netcdf.defVar(f,'month','short',dimid0);
-    varid2 = netcdf.defVar(f,'day','short',dimid0);
-    varid3 = netcdf.defVar(f,'hour','short',dimid0);
-    varid4 = netcdf.defVar(f,'minute','short',dimid0);
-    varid5 = netcdf.defVar(f,'second','short',dimid0);
-    varid6 = netcdf.defVar(f,'millisec','short',dimid0);
-    varid7 = netcdf.defVar(f,'wkday','short',dimid0);
-    varid8 = netcdf.defVar(f,'data','int',[dimid1 dimid2 dimid0]);
-    varid9 = netcdf.defVar(f,'tas','float',dimid0);
-    netcdf.endDef(f)
-    end
 
-    kk=1;
-    jj=1;
+end 
+
+    assigned_data=1;
+    skipped_data=1;
     
     endfile = 0;
     
@@ -85,6 +67,8 @@ for i = 1:filenums
        xmldoc=fgetl(fid);
        disp(xmldoc)
     end
+    
+    outfile_created=1;
     
     
     while feof(fid)==0 && endfile == 0
@@ -99,6 +83,37 @@ for i = 1:filenums
         % assign it to the outfile.
         if (probe(1) == ID(1)) && ((probe(2) == ID(2)) || (probe(2) == ID(3)))
             
+            
+          if outfile_created == 1
+             % Create the output file as a Netcdf-4 file type and overwrite any
+             % existing file with the same name
+             if exist(outfilename1)
+                 delete(outfilename1)
+             end
+             f = netcdf.create(outfilename1, 'netcdf4');
+
+    
+             dimid0 = netcdf.defDim(f,'time',netcdf.getConstant('NC_UNLIMITED'));
+             dimid1 = netcdf.defDim(f,'ImgRowlen',2);
+             dimid2 = netcdf.defDim(f,'ImgBlocklen',2048);
+     
+             varid0 = netcdf.defVar(f,'year','ushort',dimid0);
+             varid1 = netcdf.defVar(f,'month','ushort',dimid0);
+             varid2 = netcdf.defVar(f,'day','ushort',dimid0);
+             varid3 = netcdf.defVar(f,'hour','ushort',dimid0);
+             varid4 = netcdf.defVar(f,'minute','ushort',dimid0);
+             varid5 = netcdf.defVar(f,'second','ushort',dimid0);
+             varid6 = netcdf.defVar(f,'millisec','ushort',dimid0);
+             varid7 = netcdf.defVar(f,'wkday','ushort',dimid0);
+             varid8 = netcdf.defVar(f,'data','ubyte',[dimid1 dimid2 dimid0]);
+             varid9 = netcdf.defVar(f,'tas','float',dimid0);
+             netcdf.endDef(f)
+        
+             outfile_created=2;
+            
+          end
+        
+            
             hour=fread(fid,1,'uint16');
             minute=fread(fid,1,'uint16');
             second=fread(fid,1,'uint16');
@@ -110,21 +125,21 @@ for i = 1:filenums
             overload=fread(fid,1,'uint16');
             data = fread(fid,4096,'uchar');
             
-            netcdf.putVar ( f, varid0, kk-1, 1, year );
-            netcdf.putVar ( f, varid1, kk-1, 1, month );
-            netcdf.putVar ( f, varid2, kk-1, 1, day );
-            netcdf.putVar ( f, varid3, kk-1, 1, hour );
-            netcdf.putVar ( f, varid4, kk-1, 1, minute );
-            netcdf.putVar ( f, varid5, kk-1, 1, second );
-            netcdf.putVar ( f, varid6, kk-1, 1, millisec );
-            netcdf.putVar ( f, varid7, kk-1, 1, overload );
-            netcdf.putVar ( f, varid9, kk-1, 1, tas );
+            netcdf.putVar ( f, varid0, assigned_data-1, 1, year );
+            netcdf.putVar ( f, varid1, assigned_data-1, 1, month );
+            netcdf.putVar ( f, varid2, assigned_data-1, 1, day );
+            netcdf.putVar ( f, varid3, assigned_data-1, 1, hour );
+            netcdf.putVar ( f, varid4, assigned_data-1, 1, minute );
+            netcdf.putVar ( f, varid5, assigned_data-1, 1, second );
+            netcdf.putVar ( f, varid6, assigned_data-1, 1, millisec );
+            netcdf.putVar ( f, varid7, assigned_data-1, 1, overload );
+            netcdf.putVar ( f, varid9, assigned_data-1, 1, tas );
 
-            netcdf.putVar ( f, varid8, [0, 0, kk-1], [4,1024,1], reshape(data,4,1024) );
+            netcdf.putVar ( f, varid8, [0, 0, assigned_data-1], [2,2048,1], reshape(data,2,2048) );
             
-            kk=kk+1;
-            if mod(kk,1000) == 0
-                kk
+            assigned_data=assigned_data+1;
+            if mod(assigned_data,1000) == 0
+                assigned_data
                 datestr(now)
             end
             
@@ -137,9 +152,9 @@ for i = 1:filenums
             % the data and move to the next data block. Otherwise we assume
             % that there is an error in the data and we end the function.
             
-            jj=jj+1;
-            if mod(jj,1000) == 0
-                jj
+            skipped_data=skipped_data+1;
+            if mod(skipped_data,1000) == 0
+                skipped_data
                 datestr(now)
             end
             
@@ -165,6 +180,8 @@ for i = 1:filenums
     end
     
     fclose(fid);
-    netcdf.close(f);   
+    if outfile_created == 2
+          netcdf.close(f); 
+    end
 end
 
