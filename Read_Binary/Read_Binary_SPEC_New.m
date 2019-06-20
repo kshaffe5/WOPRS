@@ -11,6 +11,10 @@ function Read_Binary_SPEC_New(infilename,outfilename)
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global tas
+
+% The first 22 lines are used to create the output files: 
+
 starpos = find(infilename == '*',1,'last');
 slashpos = find(infilename == '/',1,'last');
 
@@ -31,17 +35,38 @@ for i = 1:filenums
         outfilename = [filedir,'DIMG.',files(i).name];
     end
     
+    
+    % Naming the output files
     outfilename0=[outfilename, '.HK.cdf']; % Housekeeping data
     outfilename1=[outfilename, '.H.cdf']; % Horizontal image data
     outfilename2=[outfilename, '.V.cdf']; % Vertical image data
-
+    
+    
+    
+    % Overwrite any existing files with the same name as the new files
+    
+    if exist(outfilename0)
+         delete(outfilename0)
+    end
+    
+    if exist(outfilename1)
+         delete(outfilename1)
+    end
+    
+    if exist(outfilename2)
+         delete(outfilename2)
+    end
+    
+    % Open the input file in read-only ('r') mode for reading in
+    % little-endian ('l').
     
     fid=fopen(infilename,'r','l');
     
+    tas = 1; % Set tas to 1 before the first set of housekeeping data
     
     %  Create the housekeeping file
     
-    f0 = netcdf.create(outfilename0, 'clobber');
+    f0 = netcdf.create(outfilename0, 'NETCDF4');
     
     dim0 = netcdf.defDim(f0,'time',netcdf.getConstant('NC_UNLIMITED'));
     
@@ -101,49 +126,53 @@ for i = 1:filenums
     var53 = netcdf.defVar(f0,'number_of_empty_FIFO_faults','double',dim0);
     var54 = netcdf.defVar(f0,'spare2','double',dim0);
     var55 = netcdf.defVar(f0,'spare3','double',dim0);
-    var56 = netcdf.defVar(f0,'tas','double',dim0);
+    var56 = netcdf.defVar(f0,'tas','float',dim0);
     var57 = netcdf.defVar(f0,'timing_word','double',dim0);
     netcdf.endDef(f0)
     
     
     %  Create horizontal image file
     
-    f = netcdf.create(outfilename1, 'clobber');
+    f = netcdf.create(outfilename1, 'NETCDF4');
     
     dimid0 = netcdf.defDim(f,'time',netcdf.getConstant('NC_UNLIMITED'));
     dimid1 = netcdf.defDim(f,'ImgRowlen',8);
     dimid2 = netcdf.defDim(f,'ImgBlocklen',1700);
     
-    varid0 = netcdf.defVar(f,'year','short',dimid0);
-    varid1 = netcdf.defVar(f,'month','short',dimid0);
-    varid2 = netcdf.defVar(f,'day','short',dimid0);
-    varid3 = netcdf.defVar(f,'hour','short',dimid0);
-    varid4 = netcdf.defVar(f,'minute','short',dimid0);
-    varid5 = netcdf.defVar(f,'second','short',dimid0);
-    varid6 = netcdf.defVar(f,'millisec','short',dimid0);
-    varid7 = netcdf.defVar(f,'wkday','short',dimid0);
-    varid8 = netcdf.defVar(f,'data','int',[dimid1 dimid2 dimid0]);
+    varid0 = netcdf.defVar(f,'year','ushort',dimid0);
+    varid1 = netcdf.defVar(f,'month','ushort',dimid0);
+    varid2 = netcdf.defVar(f,'day','ushort',dimid0);
+    varid3 = netcdf.defVar(f,'hour','ushort',dimid0);
+    varid4 = netcdf.defVar(f,'minute','ushort',dimid0);
+    varid5 = netcdf.defVar(f,'second','ushort',dimid0);
+    varid6 = netcdf.defVar(f,'millisec','ushort',dimid0);
+    varid7 = netcdf.defVar(f,'wkday','ushort',dimid0);
+    varid9 = netcdf.defVar(f,'tas','float',dimid0);
+    varid8 = netcdf.defVar(f,'data','ushort',[dimid1 dimid2 dimid0]);
     netcdf.endDef(f)
+    
      
     
     %  Create the vertical image file
     
-    f1 = netcdf.create(outfilename2, 'clobber');
+    f1 = netcdf.create(outfilename2, 'NETCDF4');
     
     dimid01 = netcdf.defDim(f1,'time',netcdf.getConstant('NC_UNLIMITED'));
     dimid11 = netcdf.defDim(f1,'ImgRowlen',8);
     dimid21 = netcdf.defDim(f1,'ImgBlocklen',1700);
     
-    varid01 = netcdf.defVar(f1,'year','short',dimid01);
-    varid11 = netcdf.defVar(f1,'month','short',dimid01);
-    varid21 = netcdf.defVar(f1,'day','short',dimid01);
-    varid31 = netcdf.defVar(f1,'hour','short',dimid01);
-    varid41 = netcdf.defVar(f1,'minute','short',dimid01);
-    varid51 = netcdf.defVar(f1,'second','short',dimid01);
-    varid61 = netcdf.defVar(f1,'millisec','short',dimid01);
-    varid71 = netcdf.defVar(f1,'wkday','short',dimid01);
-    varid81 = netcdf.defVar(f1,'data','int',[dimid11 dimid21 dimid01]);
+    varid01 = netcdf.defVar(f1,'year','ushort',dimid01);
+    varid11 = netcdf.defVar(f1,'month','ushort',dimid01);
+    varid21 = netcdf.defVar(f1,'day','ushort',dimid01);
+    varid31 = netcdf.defVar(f1,'hour','ushort',dimid01);
+    varid41 = netcdf.defVar(f1,'minute','ushort',dimid01);
+    varid51 = netcdf.defVar(f1,'second','ushort',dimid01);
+    varid61 = netcdf.defVar(f1,'millisec','ushort',dimid01);
+    varid71 = netcdf.defVar(f1,'wkday','ushort',dimid01);
+    varid91 = netcdf.defVar(f1,'tas','float',dimid01);
+    varid81 = netcdf.defVar(f1,'data','ushort',[dimid11 dimid21 dimid01]);
     netcdf.endDef(f1)
+    
     
     kk0=1;
     kk1=1;
@@ -151,6 +180,8 @@ for i = 1:filenums
     endfile = 0; 
     
     disp('Processing...')
+    
+    % Read in the information until we are at the end of the file
     
     while feof(fid)==0 && endfile == 0 
         
@@ -179,6 +210,7 @@ for i = 1:filenums
         datan=[data' data1'];
         datan=datan';
         
+        % Take data and send it to 'get_img' to be decompressed and read
         
         [imgH, imgV, HK, HKon]=get_img(datan, hour*10000+minute*100+second+millisec/1000,outfilename);
         sizeimg= size(imgH);
@@ -194,6 +226,7 @@ for i = 1:filenums
         end
         
         % Housekeeping
+        
         if HKon == 1
             
             netcdf.putVar ( f0, var0, kk0-1, 1, year );
@@ -205,7 +238,7 @@ for i = 1:filenums
             netcdf.putVar ( f0, var6, kk0-1, 1, millisec );
             netcdf.putVar ( f0, var7, kk0-1, 1, wkday );
             
-            % See lines 56-105 or the SPEC manual for the full names of
+            % See the github wiki or the SPEC manual for the full names of
             % these variables.
             netcdf.putVar ( f0, var8, kk0-1, 1, HK.HE0V );
             netcdf.putVar ( f0, var9, kk0-1, 1, HK.HE64V );
@@ -277,6 +310,7 @@ for i = 1:filenums
             netcdf.putVar ( f, varid6, kk1-1, 1, millisec );
             netcdf.putVar ( f, varid7, kk1-1, 1, wkday );
             netcdf.putVar ( f, varid8, [0, 0, kk1-1], [8,1700,1], img1 );
+            netcdf.putVar ( f, varid9, kk1-1, 1, tas );
             
             kk1=kk1+1;
             if mod(kk1,1000) == 0
@@ -298,6 +332,7 @@ for i = 1:filenums
             netcdf.putVar ( f1, varid61, kk2-1, 1, millisec );
             netcdf.putVar ( f1, varid71, kk2-1, 1, wkday );
             netcdf.putVar ( f1, varid81, [0, 0, kk2-1], [8,1700,1], img2 );
+            netcdf.putVar ( f1, varid91, kk2-1, 1, tas );
 
             kk2=kk2+1;
             if mod(kk2,1000) == 0
@@ -305,6 +340,7 @@ for i = 1:filenums
             end
         end
         
+        % Read in the next byte and see if we are at the end of the file
         bb=fread(fid,1,'int8');
         if feof(fid) == 1
             endfile=1;
@@ -326,11 +362,14 @@ function [imgH, imgV, HK, HKon]=get_img(buf, timehhmmss,outfilename)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-%% Decompress the image 
+%% Decompress the data blocks
 %% Follow the SPEC manual 
 %% by Will Wu, 06/20/2013; edited by Kevin Shaffer 5/30/2019
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    global tas
+
     HKon=0;
     imgH=zeros(128,1700);
     imgV=zeros(128,1700);
@@ -477,6 +516,7 @@ function [imgH, imgV, HK, HKon]=get_img(buf, timehhmmss,outfilename)
             HK.Spare2 = buf(iii-1+48);
             HK.Spare3 = buf(iii-1+49);
             HK.tas = typecast( uint32(bin2dec([dec2bin(buf(iii-1+50),16) dec2bin(buf(iii-1+51),16)])) ,'single');
+            tas = HK.tas;
             HK.time = buf(iii-1+52)*2^16+buf(iii-1+53);
             
             iii = iii + 53;

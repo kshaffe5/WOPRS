@@ -1,13 +1,13 @@
 function Read_Binary_New(infilename, outfilename, probetype)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-%% Read the raw file, and then write into NETCDF file 
+%% Read the raw file, and then write into a NETCDF file 
 %% 
 %% Inputs: infilename, outfilename (Use '1' if the desired outfilename is 
 %%         the same as the infilename), and probetype.
 %%
-%% Supported probetypes: '2DS', 'HVPS', 'CIPG', '2DC', '2DP', or '2D'.
-%%         '2D' is for files that may include both '2DC' and '2DP' data.
+%% Supported probetypes: '2DS', 'HVPS', 'CIPG', '2DC', and '2DP'.
+%%       Call '2D' for files that may include both '2DC' and '2DP' data.
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ~exist(infilename)

@@ -7,7 +7,7 @@ function Read_Binary_PMS_New(infilename,outfilename,probetype)
 %% file. 'skipped_data' is data that is from a different probetype, and 
 %% thus it gets skipped over and not assigned to the output file.
 %%
-%% Manual: https://www.eol.ucar.edu/content/pms-2d-raw-data-format
+%% PMS Manual: https://www.eol.ucar.edu/content/pms-2d-raw-data-format
 %%
 %% Edited by Kevin Shaffer 6/17/2019
 %%
@@ -94,8 +94,8 @@ end
 
     
              dimid0 = netcdf.defDim(f,'time',netcdf.getConstant('NC_UNLIMITED'));
-             dimid1 = netcdf.defDim(f,'ImgRowlen',2);
-             dimid2 = netcdf.defDim(f,'ImgBlocklen',2048);
+             dimid1 = netcdf.defDim(f,'ImgRowlen',4);
+             dimid2 = netcdf.defDim(f,'ImgBlocklen',1024);
      
              varid0 = netcdf.defVar(f,'year','ushort',dimid0);
              varid1 = netcdf.defVar(f,'month','ushort',dimid0);
@@ -135,7 +135,7 @@ end
             netcdf.putVar ( f, varid7, assigned_data-1, 1, overload );
             netcdf.putVar ( f, varid9, assigned_data-1, 1, tas );
 
-            netcdf.putVar ( f, varid8, [0, 0, assigned_data-1], [2,2048,1], reshape(data,2,2048) );
+            netcdf.putVar ( f, varid8, [0, 0, assigned_data-1], [4,1024,1], reshape(data,4,1024) );
             
             assigned_data=assigned_data+1;
             if mod(assigned_data,1000) == 0
