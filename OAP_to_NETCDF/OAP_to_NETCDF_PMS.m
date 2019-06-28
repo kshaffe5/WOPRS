@@ -1,4 +1,4 @@
-function Create_NETCDF_PMS(infilename,outfilename,probetype)
+function OAP_to_NETCDF_PMS(infilename,outfilename,probetype)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Read the raw .2d file, and then write into NETCDF file 

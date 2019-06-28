@@ -42,7 +42,7 @@ for ii = 1:length(csvfiles)
 end
 
 % Determine the date
-[~,f] = fileparts([cipdir, csvfiles(1).name]);
+[~,f] = fileparts([cipdir, csvfiles.name]);
 ymdh=textscan(f,'00CIP Grayscale%4d%2d%2d%2d');
 darr=double(cell2mat(ymdh));
 hh=darr(4);

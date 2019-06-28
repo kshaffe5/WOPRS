@@ -1,4 +1,4 @@
-function Create_NETCDF_CIPG(cipdatapath,outdatapath,outfilename)
+function OAP_to_NETCDF_CIPG(cipdatapath,outdatapath,outfilename)
 
 %FIRST DELETE CAL AND SONIC CSV FILES FROM CIP DATETIME FOLDER
 
@@ -12,10 +12,12 @@ function Create_NETCDF_CIPG(cipdatapath,outdatapath,outfilename)
 
 p = path;
 cdir = pwd;
-path(p,[cdir,'/@cip']);
+%path(p,[cdir,'/@cip']);
 obj = cip(cipdatapath,outdatapath)
 
 unpack(obj)
+
+[outdatapath,'/',outfilename]
 
 cip_obj_to_netcdf(obj,[outdatapath,'/',outfilename])
 path(p);

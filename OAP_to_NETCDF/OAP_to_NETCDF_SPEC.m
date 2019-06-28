@@ -1,4 +1,4 @@
-function Create_NETCDF_SPEC(infilename,outfilename)
+function OAP_to_NETCDF_SPEC(infilename,outfilename)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Read the raw base*.2DS file, and then write into NETCDF file 

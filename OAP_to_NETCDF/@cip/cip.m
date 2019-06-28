@@ -36,7 +36,7 @@ classdef cip
 % Get the directory the file is in
         cipdir = fileparts(cipdir);
       end
-      obj.nfiles = length(obj.packedcip);
+      obj.nfiles = length(obj.packedcip)
       obj.cipdir = cipdir;
       % Create the names for the unpacked files
       if nargin == 1
