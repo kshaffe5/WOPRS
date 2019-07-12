@@ -1,4 +1,4 @@
-function OAP_to_NETCDF(infilename, outfilename, probetype, outfilepath)
+function run_OAP_to_NETCDF(infilename, outfilename, probetype, outfilepath)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Read the raw file, and then write into a NETCDF file 

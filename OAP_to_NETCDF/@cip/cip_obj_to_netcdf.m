@@ -35,8 +35,8 @@ f = netcdf.create(outfile, 'NETCDF4');
     varid5 = netcdf.defVar(f,'second','ushort',dimid0);
     varid6 = netcdf.defVar(f,'millisec','ushort',dimid0);
     varid7 = netcdf.defVar(f,'empty','ushort',dimid0);
-    varid8 = netcdf.defVar(f,'data','ushort',[dimid1 dimid2 dimid0]);
-    varid9 = netcdf.defVar(f,'tas','float',dimid0);
+    varid8 = netcdf.defVar(f,'data','double',[dimid1 dimid2 dimid0]);
+    %varid9 = netcdf.defVar(f,'tas','float',dimid0);
     netcdf.endDef(f)
 date_vec = datevec(dt);      
 year = date_vec(1);
@@ -94,7 +94,7 @@ for ii = 1:length(obj.cipfile)
       netcdf.putVar ( f, varid4, index, 1, minute );
       netcdf.putVar ( f, varid5, index, 1, second );
       netcdf.putVar ( f, varid6, index, 1, millisec );
-      netcdf.putVar ( f, varid9, index, 1, tas );
+      %netcdf.putVar ( f, varid9, index, 1, tas );
       netcdf.putVar ( f, varid8, [0, 0, index], [64,512,1], img_array' );
       index = index+1;
   end    
