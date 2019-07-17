@@ -1,6 +1,6 @@
 function OAP_to_NETCDF_CIPG(cipdatapath,outdatapath,outfilename)
 
-%FIRST DELETE CAL AND SONIC CSV FILES FROM CIP DATETIME FOLDER
+% FIRST DELETE CAL AND SONIC CSV FILES FROM CIP DATETIME FOLDER
 
 % This script extracts raw cip files from specified location and outputs
 % a NETCDF-4 file.
@@ -10,7 +10,7 @@ function OAP_to_NETCDF_CIPG(cipdatapath,outdatapath,outfilename)
 % outdatapath = '/kingair_data/pacmice16/cip/20160818/cip_20160818'
 % outfilename = 'DIMG.20160818.cip.cdf'
 
-% Edited by Kevin Shaffer as of 7/1/2019 
+% Edited by Kevin Shaffer as of 7/12/2019 
 
 p = path;
 cdir = pwd;

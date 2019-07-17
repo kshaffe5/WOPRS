@@ -16,7 +16,7 @@ csvsod = timestamp*86400.; %Convert to seconds from date number format
 tmask = uint32(hex2dec('AAAAAA00'));
 ipms  = 1;
 
-% Create netCDF file 
+% Create NETCDF-4 file 
 if exist(outfile)
     delete(outfile)
 end
@@ -36,7 +36,7 @@ f = netcdf.create(outfile, 'NETCDF4');
     varid6 = netcdf.defVar(f,'millisec','ushort',dimid0);
     varid7 = netcdf.defVar(f,'empty','ushort',dimid0);
     varid8 = netcdf.defVar(f,'data','double',[dimid1 dimid2 dimid0]);
-    %varid9 = netcdf.defVar(f,'tas','float',dimid0);
+    varid9 = netcdf.defVar(f,'tas','float',dimid0);
     netcdf.endDef(f)
 date_vec = datevec(dt);      
 year = date_vec(1);
@@ -94,7 +94,7 @@ for ii = 1:length(obj.cipfile)
       netcdf.putVar ( f, varid4, index, 1, minute );
       netcdf.putVar ( f, varid5, index, 1, second );
       netcdf.putVar ( f, varid6, index, 1, millisec );
-      %netcdf.putVar ( f, varid9, index, 1, tas );
+      netcdf.putVar ( f, varid9, index, length(tas), tas );
       netcdf.putVar ( f, varid8, [0, 0, index], [64,512,1], img_array' );
       index = index+1;
   end    
