@@ -20,7 +20,7 @@ unpack(obj)
 
 [outdatapath,'/',outfilename]
 
-cip_obj_to_netcdf(obj,[outdatapath,'/',outfilename])
+cip_obj_to_netcdf(obj,[outdatapath,'/',outfilename,'.CIPG.cdf'])
 path(p);
 
 end

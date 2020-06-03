@@ -1,4 +1,4 @@
-function OAP_to_NETCDF_SPEC(infilename,outfilename)
+function OAP_to_NETCDF_SPEC(infilename,outfilename,probetype)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Read the raw base*.2DS file, and then write into NETCDF file 
@@ -7,54 +7,99 @@ function OAP_to_NETCDF_SPEC(infilename,outfilename)
 %%
 %% HVPS manual : http://www.specinc.com/sites/default/files/software_and_manuals/HVPS_Technical%20Manual_rev1.2_20130227.pdf
 %%
-%% Edited by Kevin Shaffer 6/24/2019
+%% Edited by Kevin Shaffer 5/27/2020
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 global tas
 
-% The first 22 lines are used to create the output files: 
+%     % We first need to see how many records there are so that the time
+%     % dimension in the image files can be appropriately sized.
+% 
+%     record_count_H=0;
+%     record_count_V=0;
+%         
+%     fid=fopen(infilename,'r','l');
+%     
+%     
+%     endfile=0;
+%     
+%       while feof(fid)==0 && endfile == 0
+%         year=fread(fid,1,'uint16');
+%         month=fread(fid,1,'uint16');
+%         wkday=fread(fid,1,'uint16');
+%         day=fread(fid,1,'uint16');
+%         hour=fread(fid,1,'uint16');
+%         minute=fread(fid,1,'uint16');
+%         second=fread(fid,1,'uint16');
+%         millisec=fread(fid,1,'uint16');
+%         data = fread(fid,2048,'uint16');
+%         discard=fread(fid,1,'uint16');
+% 
+%         year1=fread(fid,1,'uint16');
+%         month1=fread(fid,1,'uint16');
+%         wkday1=fread(fid,1,'uint16');
+%         day1=fread(fid,1,'uint16');
+%         hour1=fread(fid,1,'uint16');
+%         minute1=fread(fid,1,'uint16');
+%         second1=fread(fid,1,'uint16');
+%         millisec1=fread(fid,1,'uint16');
+%         data1 = fread(fid,2048,'uint16');
+%         discard=fread(fid,1,'uint16');
+%         
+%         datan=[data' data1'];
+%         datan=datan';
+%         
+%         % Take data and send it to 'get_img' to be decompressed and read
+%         
+%         [imgH, imgV, HK, HKon]=get_img(datan, hour*10000+minute*100+second+millisec/1000,outfilename);
+%         sizeimg= size(imgH);
+%         if sizeimg(2)>1700
+%             imgH=imgH(:,1:1700);
+%         end
+%         
+%         sizeimg= size(imgV);
+%         if sizeimg(2)>1700
+%             imgV=imgV(:,1:1700);
+%         end
+% 
+%         if sum(sum(imgH))~=0
+%             record_count_H = record_count_H + 1;
+%         end
+%         
+%         if sum(sum(imgV))~=0
+%             record_count_V = record_count_V + 1;
+%         end
+%         
+%         % Read in the next byte and see if we are at the end of the file
+%         bb=fread(fid,1,'int8');
+%         if feof(fid) == 1
+%             endfile=1;
+%             break
+%         end
+%         fseek(fid,-4115,'cof');
+%       end
+%       
+%       fclose(fid);
 
-starpos = find(infilename == '*',1,'last');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% This is where we name the output files: 
+
 slashpos = find(infilename == '/',1,'last');
+filedir = infilename(1:slashpos);
+filename = infilename(slashpos+1:end);
 
-if ~isempty(starpos) | outfilename == '1'
-    files = dir(infilename);
-    filenums = length(files);
-    filedir = infilename(1:slashpos);
-else
-    filenums = 1;
-end
-
-for i = 1:filenums
-    if filenums > 1 || ~isempty(starpos)
-        infilename = [filedir,files(i).name];
-    end
-    
-    if outfilename == '1'
-        outfilename = [filedir,'DIMG.',files(i).name];
-    end
-    
-    
     % Naming the output files
-    outfilename0=[outfilename, '.HK.cdf']; % Housekeeping data
-    outfilename1=[outfilename, '.H.cdf']; % Horizontal image data
-    outfilename2=[outfilename, '.V.cdf']; % Vertical image data
-    
-    
-    
-    % Overwrite any existing files with the same name as the new files
-    
-    if exist(outfilename0)
-         delete(outfilename0)
-    end
-    
-    if exist(outfilename1)
-         delete(outfilename1)
-    end
-    
-    if exist(outfilename2)
-         delete(outfilename2)
+    if strcmpi('2DS',probetype)
+        outfilename0=[filedir,'DIMG.',filename,'.2DS.HK.cdf']; % Housekeeping data
+        outfilename1=[filedir,'DIMG.',filename,'.2DS.H.cdf']; % Horizontal image data
+        outfilename2=[filedir,'DIMG.',filename,'.2DS.V.cdf']; % Vertical image data
+    elseif strcmpi('HVPS',probetype)
+        outfilename0=[filedir,'DIMG.',filename,'.HVPS.HK.cdf']; % Housekeeping data
+        outfilename1=[filedir,'DIMG.',filename,'.HVPS.H.cdf']; % Horizontal image data
+        outfilename2=[filedir,'DIMG.',filename,'.HVPS.V.cdf']; % Vertical image data
     end
     
     % Open the input file in read-only ('r') mode for reading in
@@ -66,7 +111,7 @@ for i = 1:filenums
     
     %  Create the housekeeping file
     
-    f0 = netcdf.create(outfilename0, 'NETCDF4');
+    f0 = netcdf.create(outfilename0, 'CLOBBER');
     
     dim0 = netcdf.defDim(f0,'time',netcdf.getConstant('NC_UNLIMITED'));
     
@@ -122,7 +167,7 @@ for i = 1:filenums
     var49 = netcdf.defVar(f0,'number_of_slice_count_mismatches','double',dim0);
     var50 = netcdf.defVar(f0,'number_of_horizontal_overload_periods','double',dim0);
     var51 = netcdf.defVar(f0,'number_of_vertical_overload_periods','double',dim0);
-    var52 = netcdf.defVar(f0,'compression_configuration','short',dim0); % Check the 2DS/HVPS manual for info on how to read this
+    var52 = netcdf.defVar(f0,'compression_configuration','double',dim0); % Check the 2DS/HVPS manual for info on how to read this
     var53 = netcdf.defVar(f0,'number_of_empty_FIFO_faults','double',dim0);
     var54 = netcdf.defVar(f0,'spare2','double',dim0);
     var55 = netcdf.defVar(f0,'spare3','double',dim0);
@@ -133,21 +178,21 @@ for i = 1:filenums
     
     %  Create horizontal image file
     
-    f = netcdf.create(outfilename1, 'NETCDF4');
+    f = netcdf.create(outfilename1, 'CLOBBER');
     
-    dimid0 = netcdf.defDim(f,'time',netcdf.getConstant('NC_UNLIMITED'));
+    dimid0 = netcdf.defDim(f,'time', netcdf.getConstant('NC_UNLIMITED'));
     dimid1 = netcdf.defDim(f,'ImgRowlen',8);
     dimid2 = netcdf.defDim(f,'ImgBlocklen',1700);
     
-    varid0 = netcdf.defVar(f,'year','ushort',dimid0);
-    varid1 = netcdf.defVar(f,'month','ushort',dimid0);
-    varid2 = netcdf.defVar(f,'day','ushort',dimid0);
-    varid3 = netcdf.defVar(f,'hour','ushort',dimid0);
-    varid4 = netcdf.defVar(f,'minute','ushort',dimid0);
-    varid5 = netcdf.defVar(f,'second','ushort',dimid0);
-    varid6 = netcdf.defVar(f,'millisec','ushort',dimid0);
-    varid7 = netcdf.defVar(f,'wkday','ushort',dimid0);
-    varid8 = netcdf.defVar(f,'data','ushort',[dimid1 dimid2 dimid0]);
+    varid0 = netcdf.defVar(f,'year','short',dimid0);
+    varid1 = netcdf.defVar(f,'month','short',dimid0);
+    varid2 = netcdf.defVar(f,'day','short',dimid0);
+    varid3 = netcdf.defVar(f,'hour','short',dimid0);
+    varid4 = netcdf.defVar(f,'minute','short',dimid0);
+    varid5 = netcdf.defVar(f,'second','short',dimid0);
+    varid6 = netcdf.defVar(f,'millisec','short',dimid0);
+    varid7 = netcdf.defVar(f,'wkday','short',dimid0);
+    varid8 = netcdf.defVar(f,'data','double',[dimid1 dimid2 dimid0]);
     varid9 = netcdf.defVar(f,'tas','float',dimid0);
     netcdf.endDef(f)
     
@@ -155,21 +200,21 @@ for i = 1:filenums
     
     %  Create the vertical image file
     
-    f1 = netcdf.create(outfilename2, 'NETCDF4');
+    f1 = netcdf.create(outfilename2, 'CLOBBER');
     
     dimid01 = netcdf.defDim(f1,'time',netcdf.getConstant('NC_UNLIMITED'));
     dimid11 = netcdf.defDim(f1,'ImgRowlen',8);
     dimid21 = netcdf.defDim(f1,'ImgBlocklen',1700);
     
-    varid01 = netcdf.defVar(f1,'year','ushort',dimid01);
-    varid11 = netcdf.defVar(f1,'month','ushort',dimid01);
-    varid21 = netcdf.defVar(f1,'day','ushort',dimid01);
-    varid31 = netcdf.defVar(f1,'hour','ushort',dimid01);
-    varid41 = netcdf.defVar(f1,'minute','ushort',dimid01);
-    varid51 = netcdf.defVar(f1,'second','ushort',dimid01);
-    varid61 = netcdf.defVar(f1,'millisec','ushort',dimid01);
-    varid71 = netcdf.defVar(f1,'wkday','ushort',dimid01);
-    varid81 = netcdf.defVar(f1,'data','ushort',[dimid11 dimid21 dimid01]);
+    varid01 = netcdf.defVar(f1,'year','short',dimid01);
+    varid11 = netcdf.defVar(f1,'month','short',dimid01);
+    varid21 = netcdf.defVar(f1,'day','short',dimid01);
+    varid31 = netcdf.defVar(f1,'hour','short',dimid01);
+    varid41 = netcdf.defVar(f1,'minute','short',dimid01);
+    varid51 = netcdf.defVar(f1,'second','short',dimid01);
+    varid61 = netcdf.defVar(f1,'millisec','short',dimid01);
+    varid71 = netcdf.defVar(f1,'wkday','short',dimid01);
+    varid81 = netcdf.defVar(f1,'data','double',[dimid11 dimid21 dimid01]);
     varid91 = netcdf.defVar(f1,'tas','float',dimid01);
     netcdf.endDef(f1)
     
@@ -216,13 +261,11 @@ for i = 1:filenums
         sizeimg= size(imgH);
         if sizeimg(2)>1700
             imgH=imgH(:,1:1700);
-            sizeimg(2)
         end
         
         sizeimg= size(imgV);
         if sizeimg(2)>1700
             imgV=imgV(:,1:1700);
-            sizeimg(2)
         end
         
         % Housekeeping
@@ -390,7 +433,7 @@ function [imgH, imgV, HK, HKon]=get_img(buf, timehhmmss,outfilename)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
               % Number of vertical words (Is this necessary?)
               myformatNV = '%f, %d\n';
-              fid = fopen([outfilename, '.NV.csv'],'a');
+              fid = fopen([outfilename, '.NV.SPEC.csv'],'a');
               fprintf(fid, myformatNV, [timehhmmss buf(iii+2)]);
               fclose(fid);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -528,7 +571,7 @@ function [imgH, imgV, HK, HKon]=get_img(buf, timehhmmss,outfilename)
             timeEnd = buf(iii-1+22)*2^16+buf(iii-1+23);
             
             myformat2 = '%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d \n';
-            fid = fopen([outfilename, '.MK.csv'],'a');
+            fid = fopen([outfilename, '.MK.SPEC.csv'],'a');
             fprintf(fid, myformat2, [timeWord MaskBits timeStart timeEnd]);
             fclose(fid);
             

@@ -1,10 +1,10 @@
-function Image_Analysis_core(infile, outfile, probetype, n, nEvery, threshold)
+function Image_Analysis_core(infile, outfile, probename, threshold)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function is the base function for the image processsing step of OAP 
 % processing. This step utilizes parallel processing to speed up the 
 % processing speed. All probetypes are compatible with this function.
 % 
-% User Inputs:
+% Inputs:
 % infile - full directory listing of the image file created during the
 %          OAP_to_NETCDF step.
 % outfile - infilename with '.proc.cdf' at the end of the file name
@@ -16,9 +16,8 @@ function Image_Analysis_core(infile, outfile, probetype, n, nEvery, threshold)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Setting probe information according to probe type
-%    use ProbeType to indicate four types of probes:
-%       0: 2DC/2DP 
-%       1: CIP/PIP **(Currently not in use)**
+%    use ProbeType to indicate three types of probes:
+%       1: 2DC/2DP 
 %       2: HVPS/2DS
 %       3: CIPG 
 
@@ -29,7 +28,7 @@ switch probename
 
         handles.diodesize = 0.025;  % Size of diode in millimeters
         handles.diodenum  = 32;  % Diode number
-        probetype=0;
+        probetype=1;
 
     case '2DP'
         boundary=[255 255 255 255];
@@ -37,16 +36,8 @@ switch probename
         
         handles.diodesize = 0.200;  % Size of diode in millimeters 
         handles.diodenum  = 32;  % Diode number
-        probetype=0;
+        probetype=1;
         clockfactor = 2.; %Correction in clock cycles in timer word for 2DP probe and King Air data system in conjunction
-
-    case 'CIPG'
-        boundary=3*ones(1,64);
-        boundarytime=3;
-		    
-        handles.diodesize = 0.025;  % Size of diode in millimeters
-        handles.diodenum  = 64;  % Diode number
-        probetype=3;
  
     case 'HVPS'
         boundary=[43690, 43690, 43690, 43690, 43690, 43690, 43690, 43690];
@@ -63,6 +54,14 @@ switch probename
         handles.diodesize = 0.010;  % Size of diode in millimeters
         handles.diodenum  = 128;  % Diode number
         probetype=2;
+        
+    case 'CIPG'
+        boundary=3*ones(1,64);
+        boundarytime=3;
+		    
+        handles.diodesize = 0.025;  % Size of diode in millimeters
+        handles.diodenum  = 64;  % Diode number
+        probetype=3;
     otherwise 
         disp('ERROR: Probetype is not supported. Please enter one of the following: 2DP, 2DC, 2DS, HVPS, or CIPG.')
         return;
@@ -78,65 +77,48 @@ if(~exist('clockfactor'))
     clockfactor = 1.;
 end
 
+diodenum = handles.diodenum;
 
 % Read the particle image files
 handles.f = netcdf.open(infile,'nowrite');
-[~, dimlen] = netcdf.inqDim(handles.f,2);
 [~, handles.img_count] = netcdf.inqDim(handles.f,0); 
 warning off all
-diode_stats = zeros(1,diodenum);
 
 
-% Create output NETCDF-4 file and define the variables
-if exist(outfile)
-    delete(outfile)
-end
-f = netcdf.create(outfile, 'NETCDF4');
+% Create output NETCDF file and define the variables
+
+f = netcdf.create(outfile, 'CLOBBER');
 dimid0 = netcdf.defDim(f,'time',netcdf.getConstant('NC_UNLIMITED'));
 dimid1 = netcdf.defDim(f,'pos_count',2);
 dimid2 = netcdf.defDim(f,'bin_count',diodenum);
 
-varid0 = netcdf.defVar(f,'Date','ushort',dimid0);
-varid1  = netcdf.defVar(f,'Time','ushort',dimid0);
-varid2  = netcdf.defVar(f,'msec','ushort',dimid0);
-varid3  = netcdf.defVar(f,'Time_in_seconds','ushort',dimid0);
-varid4  = netcdf.defVar(f,'SliceCount','ushort',dimid0);
+% Variables that are calculated/found for all particles
+varid0 = netcdf.defVar(f,'Date','short',dimid0);
+varid1  = netcdf.defVar(f,'Time','short',dimid0);
+varid2  = netcdf.defVar(f,'msec','short',dimid0);
+varid3  = netcdf.defVar(f,'Time_in_seconds','short',dimid0);
+varid4  = netcdf.defVar(f,'SliceCount','short',dimid0);
 varid5  = netcdf.defVar(f,'PMS_overload_SPEC_wkday','double',dimid0);
 varid6  = netcdf.defVar(f,'Particle_number_all','double',dimid0);
-varid7  = netcdf.defVar(f,'position','ushort',[dimid1 dimid0]);
-varid8  = netcdf.defVar(f,'particle_time','ushort',dimid0);
-varid9  = netcdf.defVar(f,'particle_millisec','ushort',dimid0);
-varid10  = netcdf.defVar(f,'particle_microsec','ushort',dimid0);
-varid11  = netcdf.defVar(f,'parent_rec_num','ushort',dimid0);
-varid12  = netcdf.defVar(f,'particle_num','ushort',dimid0);
-varid13 = netcdf.defVar(f,'image_length','ushort',dimid0);                                
-varid14 = netcdf.defVar(f,'image_width','ushort',dimid0);                                 
-varid15 = netcdf.defVar(f,'image_area','ushort',dimid0); 
-varid16 = netcdf.defVar(f,'image_perimeter','ushort',dimid0);
-varid17 = netcdf.defVar(f,'image_max_top_edge_touching','ushort',dimid0);                 
-varid18 = netcdf.defVar(f,'image_max_bottom_edge_touching','ushort',dimid0);              
-varid19 = netcdf.defVar(f,'image_touching_edge','ushort',dimid0); 
-varid20 = netcdf.defVar(f,'percent_shadow_area','ushort',dimid0);
-varid21 = netcdf.defVar(f,'particle_class','ushort',dimid0);  % Replacing holroyd habits and reject statuses
+varid7  = netcdf.defVar(f,'position','short',[dimid1 dimid0]);
+varid8  = netcdf.defVar(f,'particle_time','short',dimid0);
+varid9  = netcdf.defVar(f,'particle_millisec','short',dimid0);
+varid10  = netcdf.defVar(f,'particle_microsec','short',dimid0);
+varid11  = netcdf.defVar(f,'parent_rec_num','short',dimid0);
+varid12 = netcdf.defVar(f,'image_height','short',dimid0);  
+varid13 = netcdf.defVar(f,'inter_arrival','short',dimid0);
+varid14 = netcdf.defVar(f,'reject_status','short',dimid0); 
+varid15 = netcdf.defVar(f,'equiv_diam','short',dimid0);
+varid16 = netcdf.defVar(f,'area','ushort',dimid0);
 
-% Undecided on these:
-%***************************************************************
-varid13 = netcdf.defVar(f,'image_longest_y','short',dimid0);                                                                                                               
-varid19 = netcdf.defVar(f,'image_center_in','short',dimid0);                             
-varid20 = netcdf.defVar(f,'image_axis_ratio','short',dimid0);                            
-varid21 = netcdf.defVar(f,'image_diam_circle_fit','short',dimid0);                       
-varid22 = netcdf.defVar(f,'image_diam_horiz_chord','short',dimid0);                      
-varid23 = netcdf.defVar(f,'image_diam_horiz_chord_corr','short',dimid0);                              
-varid25 = netcdf.defVar(f,'image_diam_vert_chord','short',dimid0);                       
-varid26 = netcdf.defVar(f,'image_diam_minR','short',dimid0);                       
-varid27 = netcdf.defVar(f,'image_diam_AreaR','short',dimid0);                              
-varid29 = netcdf.defVar(f,'edge_at_max_hole','short',dimid0);                            
-varid30 = netcdf.defVar(f,'max_hole_diameter','short',dimid0);                                                                 
-varid32 = netcdf.defVar(f,'size_factor','short',dimid0);                                                                
-varid34 = netcdf.defVar(f,'area_hole_ratio','short',dimid0);                             
-varid35 = netcdf.defVar(f,'inter_arrival','short',dimid0);                               
-varid36 = netcdf.defVar(f,'bin_stats','short',dimid2);   
-%***************************************************************
+% % Variables that are calculated for level 2 and 3 particles only
+% varid16 = netcdf.defVar(f,'num_holes','ushort',dimid0);
+% varid17 = netcdf.defVar(f,'image_perimeter','ushort',dimid0);  
+% varid18 = netcdf.defVar(f,'percent_shadow_area','ushort',dimid0);
+% 
+% % Variables that are calculated for level 3 particles only
+ 
+% varid20 = netcdf.defVar(f,'circularity','ushort',dimid0);
 
 netcdf.endDef(f)
 
@@ -145,8 +127,11 @@ kk=1;
 w=-1;
 wstart = 0;
 
-% Begin the processing by reading in the variable information  
-for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
+% Begin the processing by reading in the variable information 
+% This is the start of our loop over every individual particle
+%for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
+handles.img_count
+for i=(1:handles.img_count)
 
     handles.year     = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'year'    ),i-1,1);
     handles.month    = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'month'  ),i-1,1);
@@ -156,12 +141,12 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
     handles.second   = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'second'  ),i-1,1);
     handles.millisec = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'millisec'),i-1,1);
     handles.tas      = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'tas'),i-1,1);
-    if probetype == 0
+    if probetype == 1 %PMS
         handles.overload    = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'overload'),i-1,1);
-    elseif probetype ==2
+    elseif probetype ==2 %SPEC
         handles.wkday       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'wkday'),i-1,1);
-    else
-        handles.empty       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'wkday'),i-1,1);
+    else %CIPG
+        handles.empty       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'empty'),i-1,1);
     end
      if mod(i,100) == 0
         [num2str(i),'/',num2str(handles.img_count), ', ',datestr(now)]
@@ -169,12 +154,12 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
     
     % Data sizes vary between the probetypes
     varid = netcdf.inqVarID(handles.f,'data');
-    if probetype==0 %PMS
+    if probetype==1 %PMS
         temp = netcdf.getVar(handles.f,varid,[0, 0, i-1], [4,1024,1]);
-    elseif(probetype == 3) %CIPG
-        temp = netcdf.getVar(handles.f,varid,[0, 0, i-1], [64,512,1]);
-    else %SPEC
+    elseif(probetype == 2) %SPEC
         temp = netcdf.getVar(handles.f,varid,[0, 0, i-1], [8,1700,1]);
+    else %CIPG
+        temp = netcdf.getVar(handles.f,varid,[0, 0, i-1], [64,512,1]);
     end
     data(:,:) = temp';  
     
@@ -185,16 +170,10 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
     while data(j,1) ~= -1 && j < size(data,1)
         if (isequal(data(j,:), boundary) && ( (isequal(data(j+1,1), boundarytime) || probetype==1) ) )
            if start ==0
-               if 1 == probetype 
-                   start = 2;
-               elseif 2 == probetype
                    start = 1;
-               else
-                   start = 1;
-               end
            end
 
-              if probetype==0
+              if probetype==1
                    if start+1 > (j-1)  % Remove Corrupted Data
                         start = j + 2;
                         j = j + 1;
@@ -221,13 +200,9 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                 
                 % Create binary image according to probe type
                    
-                if probetype==0    
+                if probetype==1    
                     ind_matrix(1:j-start-1,:) = data(start+1:j-1,:);  % 2DC has 3 slices between particles (sync word, timing word, and end of particle words)
                     c=[dec2bin(ind_matrix(:,1),8),dec2bin(ind_matrix(:,2),8),dec2bin(ind_matrix(:,3),8),dec2bin(ind_matrix(:,4),8)];
-                elseif probetype==1
-                    ind_matrix(1:j-start,:) = data(start:j-1,:);
-                    c=[dec2bin(ind_matrix(:,1),8), dec2bin(ind_matrix(:,2),8),dec2bin(ind_matrix(:,3),8),dec2bin(ind_matrix(:,4),8), ...
-                    dec2bin(ind_matrix(:,5),8), dec2bin(ind_matrix(:,6),8),dec2bin(ind_matrix(:,7),8),dec2bin(ind_matrix(:,8),8)];
                 elseif probetype==2
                     ind_matrix(1:j-start,:) = 65535 - data(start:j-1,:); % I used 1 to indicate the illuminated doides for HVPS
                     c=[dec2bin(ind_matrix(:,1),16), dec2bin(ind_matrix(:,2),16),dec2bin(ind_matrix(:,3),16),dec2bin(ind_matrix(:,4),16), ...
@@ -250,6 +225,9 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                     c = c';
                 end
                 
+                
+% NOW WE NEED TO CLASSIFY PARTCILES AND CALCULATE PERIMETER, AREA, ETC... 
+            
                 % Just to test if there is bad images, usually 0 area images
                 figsize = size(c);
                 if figsize(2)~=diodenum
@@ -259,18 +237,17 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                 
                 images.position(kk,:) = [start, j-1];
                 parent_rec_num(kk)=i;
-                if(probetype < 3)
+                if(probetype < 2)
                    particle_num(kk) = mod(kk,66536); 
                 end
                 
                 %  Get the particle time 
-                if probetype==0 %PMS
+                if probetype==1 %PMS
                     bin_convert = [dec2bin(data(header_loc,2),8),dec2bin(data(header_loc,3),8),dec2bin(data(header_loc,4),8)];
-                    part_time = bin2dec(bin_convert)*clockfactor;       % Interarrival time in tas clock cycles -- needs to be multiplied by 2 for the King Air 2DP probe
+                    part_time = bin2dec(bin_convert)*clockfactor;       % Interarrival time in tas clock cycles -- needs to be multiplied by 2 for the 2DP probe
                     part_time = part_time/tas*handles.diodesize/(10^3);                    
                     time_in_seconds(kk) = part_time;
-                    particle_sliceCount(kk) = size(ind_matrix,1); %Needs to be changed
-                    particle_misc(kk)= handles.overload; 
+                    PMSoverload_SPECwkday(kk)= handles.overload; 
                     
                     images.int_arrival(kk) = part_time;
                     
@@ -288,7 +265,6 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                         part_mil(kk) = start_msec;
                         part_micro(kk) = start_microsec;
                         
-                        particle_partNum(kk) = 1;
                     else
                         frac_time = part_time - floor(part_time);
                         frac_time = frac_time * 1000;
@@ -298,7 +274,6 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                         part_min(kk) = part_min(kk-1);
                         part_hour(kk) = part_hour(kk-1);
                         
-                        particle_partNum(kk) = particle_partNum(kk-1) + 1;
                     end
                     part_mil(part_micro >= 1000) = part_mil(part_micro >= 1000) + 1;
                     part_micro(part_micro >= 1000) = part_micro(part_micro >= 1000) - 1000;
@@ -312,32 +287,10 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                     part_hour(part_min >= 60) = part_hour(part_min >= 60) + 1;
                     part_min(part_min >= 60) = part_min(part_min >= 60) - 60;
                     part_hour(part_hour >= 24) = part_hour(part_hour >= 24) - 24;
-                elseif probetype==1
-                    bin_convert = [dec2bin(data(start-1,2),8),dec2bin(data(start-1,3),8),dec2bin(data(start-1,4),8), ...
-                        dec2bin(data(start-1,5),8), dec2bin(data(start-1,6),8)];
-
-                    part_hour(kk) = bin2dec(bin_convert(1:5));
-                    part_min(kk) = bin2dec(bin_convert(6:11));
-                    part_sec(kk) = bin2dec(bin_convert(12:17));
-                    part_mil(kk) = bin2dec(bin_convert(18:27));
-                    part_micro(kk) = bin2dec(bin_convert(28:40))*125e-9;
-                
-                    particle_sliceCount(kk)=bitand(data(start-1,1),127);
-                    particle_partNum(kk)=bin2dec([dec2bin(data(start-1,7),8),dec2bin(data(start-1,8),8)]);
-
-                    time_in_seconds(kk) = part_hour(kk) * 3600 + part_min(kk) * 60 + part_sec(kk) + part_mil(kk)/1000 + part_micro(kk);
-                    if kk > 1
-                        images.int_arrival(kk) = time_in_seconds(kk) - time_in_seconds(kk-1);
-                    else
-                        images.int_arrival(kk) = time_in_seconds(kk);
-                    end
-
+       
 
                 elseif probetype==2 %SPEC
-
-                    particle_partNum(kk)=double(data(header_loc,5));
-                    particle_sliceCount(kk)=double(data(header_loc,6));
-                    particle_misc(kk)= handles.wkday;
+                    PMSoverload_SPECwkday(kk)= handles.wkday;
 
                     part_time = double(data(header_loc,7))*2^16+double(data(header_loc,8));       % Interarrival time in tas clock cycles
                     part_micro(kk) = part_time;
@@ -351,7 +304,8 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                     else
                         images.int_arrival(kk) = 0;
                     end
-                elseif probetype==3
+                    
+                elseif probetype==3 %CIPG
                      %slice[127:120] 8-bit slice count
                      %slice[119:115] 5-bit hours
                      %slice[114:109] 6-bit minutes
@@ -373,10 +327,7 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                      part_micro(kk) = bitget(data(header_loc,47),1)*512+data(header_loc,46)*128+data(header_loc,45)*32+data(header_loc,44)*8+data(header_loc,43)*2+bitshift(data(header_loc,42),-1);
                      part_micro(kk) = part_micro(kk) + 3/8*(bitget(data(header_loc,42),1)*4+data(header_loc,41));
                      
-                     fours = power(4,0:2);
-                     particle_sliceCount(kk)= 2*sum(data(header_loc,60:62).*fours)+floor(data(header_loc,63)/2);%bitand(data(header_loc,1),127);
-                     particle_partNum(kk)=0;
-                     particle_misc(kk)= handles.empty;
+                     PMSoverload_SPECwkday(kk)= handles.empty;
                      
                      fours = power(4,0:7);
                      particle_num(kk) = sum(data(header_loc,33:40).*fours);
@@ -393,5 +344,51 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                 rec_time(kk)=double(handles.hour)*10000+double(handles.minute)*100+double(handles.second);
                 rec_date(kk)=double(handles.year)*10000+double(handles.month)*100+double(handles.day);
                 rec_millisec(kk)=handles.millisec;
-   
-% NOW WE NEED TO CLASSIFY PARTCILES AND CALCULATE PERIMETER, AREA, ETC...   
+                
+                % Now we have to go through the three levels of image
+                % analysis. Images will continue to levels 2 and 3 only if
+                % they pass our criteria of the previous level(s)
+                
+                reject_status = 0;
+                [slicecount,height,reject_status,equiv_diam,area]=Image_Analysis_Classification_level_1(c);
+            
+                if reject_status==0
+                    [num_holes,hole_area,reject_status]=Image_Analysis_Classification_level_2(c)
+                end
+                
+                if reject_status==0
+                    [..,reject_status]=Image_Analysis_Classification_level_3(c)
+                end
+
+                
+                
+        netcdf.putVar ( f, varid0, wstart, w-wstart+1, rec_date(:) );
+        netcdf.putVar ( f, varid1, wstart, w-wstart+1, rec_time(:) );
+        netcdf.putVar ( f, varid2, wstart, w-wstart+1, rec_millisec(:) );
+        netcdf.putVar ( f, varid3, wstart, w-wstart+1, time_in_seconds(:) );
+        netcdf.putVar ( f, varid4, wstart, w-wstart+1, slicecount );
+        netcdf.putVar ( f, varid5, wstart, w-wstart+1, PMSoverload_SPECwkday );
+        netcdf.putVar ( f, varid6, wstart, w-wstart+1, particle_num(:) );
+        netcdf.putVar ( f, varid7, [0 wstart], [2 w-wstart+1], images.position );
+        netcdf.putVar ( f, varid8, wstart, w-wstart+1, part_hour(:)*10000+part_min(:)*100+part_sec(:) );
+        netcdf.putVar ( f, varid9, wstart, w-wstart+1, part_mil(:) );
+        netcdf.putVar ( f, varid10, wstart, w-wstart+1, part_micro(:) );
+        netcdf.putVar ( f, varid11, wstart, w-wstart+1, parent_rec_num );
+        netcdf.putVar ( f, varid12, wstart, w-wstart+1, height );
+        netcdf.putVar ( f, varid13, wstart, w-wstart+1, images.int_arrival );
+        netcdf.putVar ( f, varid14, wstart, w-wstart+1, reject_status );
+        netcdf.putVar ( f, varid15, wstart, w-wstart+1, equiv_diam );
+        netcdf.putVar ( f, varid16, wstart, w-wstart+1, area );
+        
+        wstart = w+1;
+        kk = 1;
+        clear rec_time rec_date rec_millisec part_hour part_min part_sec part_mil part_micro parent_rec_num particle_num images time_in_seconds slicecount
+
+    end
+    clear images
+end
+warning on all
+
+netcdf.close(handles.f);
+netcdf.close(f);
+end

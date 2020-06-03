@@ -3,9 +3,7 @@ function run_OAP_to_NETCDF(infilename, outfilename, probetype, outfilepath)
 %%
 %% Read the raw file, and then write into a NETCDF file 
 %% 
-%% Inputs: infilename, outfilename (Use '1' if the desired outfilename is 
-%%         the same as the infilename), and probetype. Outfilepath is only
-%%         used for the CIPG (see details below).
+%% Inputs: infilename, outfilename 
 %%
 %% IMPORTANT INFO ABOUT THE CIPG: The inputs necessary for the CIPG are 
 %%      different than for the other probetypes. Infilename should instead
@@ -32,9 +30,9 @@ if ~exist(infilename)
 end
 
 if strcmpi('2DS',probetype)
-    OAP_to_NETCDF_SPEC(infilename,outfilename);
+    OAP_to_NETCDF_SPEC(infilename,outfilename,'2DS');
 elseif strcmpi('HVPS',probetype)
-    OAP_to_NETCDF_SPEC(infilename,outfilename);
+    OAP_to_NETCDF_SPEC(infilename,outfilename,'HVPS');
 elseif strcmpi('CIPG',probetype)
     OAP_to_NETCDF_CIPG(infilename,outfilepath,outfilename);
 elseif strcmpi('2DC',probetype)

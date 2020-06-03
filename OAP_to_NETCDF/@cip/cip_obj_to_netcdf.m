@@ -1,6 +1,6 @@
 function cip_obj_to_netcdf(obj, outfile)
 
-
+particles=0;
 
 % Read the CIP csv data
 [timestamp,csvtas, dt] = obj.ciptas(obj.cipdir, obj.csvfile);
@@ -42,6 +42,7 @@ date_vec = datevec(dt);
 year = date_vec(1);
 month = date_vec(2);
 day = date_vec(3);
+
 % Open and read each file of unpacked cip images
 index = 1;
 
@@ -87,6 +88,7 @@ for ii = 1:length(obj.cipfile)
       millisec = floor((sod(particle_index)-hour*3600-minute*60-second)*100);
       disp(['Writing frame ' num2str(index)]);
       % Write buffer
+      particles=particles+1;
       netcdf.putVar ( f, varid0, index, 1, year );
       netcdf.putVar ( f, varid1, index, 1, month );
       netcdf.putVar ( f, varid2, index, 1, day );
@@ -99,6 +101,7 @@ for ii = 1:length(obj.cipfile)
       index = index+1;
   end    
 end    
+particles
 netcdf.close(f);
 
 function tword = timing(dsec,tmask)
