@@ -105,20 +105,16 @@ varid8  = netcdf.defVar(f,'particle_time','short',dimid0);
 varid9  = netcdf.defVar(f,'particle_millisec','short',dimid0);
 varid10  = netcdf.defVar(f,'particle_microsec','short',dimid0);
 varid11  = netcdf.defVar(f,'parent_rec_num','short',dimid0);
-varid12 = netcdf.defVar(f,'image_height','short',dimid0);  
+varid12 = netcdf.defVar(f,'height','short',dimid0);  
 varid13 = netcdf.defVar(f,'inter_arrival','short',dimid0);
 varid14 = netcdf.defVar(f,'reject_status','short',dimid0); 
 varid15 = netcdf.defVar(f,'equiv_diam','short',dimid0);
 varid16 = netcdf.defVar(f,'area','ushort',dimid0);
-
-% % Variables that are calculated for level 2 and 3 particles only
-% varid16 = netcdf.defVar(f,'num_holes','ushort',dimid0);
-% varid17 = netcdf.defVar(f,'image_perimeter','ushort',dimid0);  
-% varid18 = netcdf.defVar(f,'percent_shadow_area','ushort',dimid0);
-% 
-% % Variables that are calculated for level 3 particles only
- 
-% varid20 = netcdf.defVar(f,'circularity','ushort',dimid0);
+varid17 = netcdf.defVar(f,'num_holes','ushort',dimid0);
+varid18 = netcdf.defVar(f,'hole_area','ushort',dimid0); 
+varid19 = netcdf.defVar(f,'eccentricity','ushort',dimid0);
+varid20 = netcdf.defVar(f,'circularity','ushort',dimid0);
+varid21 = netcdf.defVar(f,'orientation','ushort',dimid0);
 
 netcdf.endDef(f)
 
@@ -349,7 +345,12 @@ for i=(1:handles.img_count)
                 % analysis. Images will continue to levels 2 and 3 only if
                 % they pass our criteria of the previous level(s)
                 
-                reject_status = 0;
+                num_holes = -999;
+                hole_area = -999;
+                eccentricity = -999;
+                circularity = -999;
+                orientation = -999;
+                
                 [slicecount,height,reject_status,equiv_diam,area]=Image_Analysis_Classification_level_1(c);
             
                 if reject_status==0
@@ -379,6 +380,12 @@ for i=(1:handles.img_count)
         netcdf.putVar ( f, varid14, wstart, w-wstart+1, reject_status );
         netcdf.putVar ( f, varid15, wstart, w-wstart+1, equiv_diam );
         netcdf.putVar ( f, varid16, wstart, w-wstart+1, area );
+        netcdf.putVar ( f, varid17, wstart, w-wstart+1, num_holes );
+        netcdf.putVar ( f, varid18, wstart, w-wstart+1, hole_area );
+        netcdf.putVar ( f, varid19, wstart, w-wstart+1, eccentricity );
+        netcdf.putVar ( f, varid20, wstart, w-wstart+1, circularity );
+        netcdf.putVar ( f, varid21, wstart, w-wstart+1, orientation );
+        
         
         wstart = w+1;
         kk = 1;

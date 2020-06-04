@@ -50,4 +50,6 @@ function [num_holes,hole_area,reject_status]=Image_Analysis_Classification_level
         end
     end
     
+reject_status = 0;
+    
 end

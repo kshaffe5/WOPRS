@@ -37,4 +37,7 @@ image_size = size(image_buffer);
         eccentricity=stats.Eccentricity;
         circularity =stats.Circularity;
         orientation =stats.Orientation;
+        
+reject_status = 0;
+
 end

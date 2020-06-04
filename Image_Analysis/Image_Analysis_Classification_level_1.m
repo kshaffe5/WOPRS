@@ -50,5 +50,6 @@ function [slicecount,height,reject_status,equiv_diam,area]=Image_Analysis_Classi
         return;
     end
      
+reject_status = 0;
 
 end
