@@ -354,11 +354,11 @@ for i=(1:handles.img_count)
                 [slicecount,height,reject_status,equiv_diam,area]=Image_Analysis_Classification_level_1(c);
             
                 if reject_status==0
-                    [num_holes,hole_area,reject_status]=Image_Analysis_Classification_level_2(c)
+                    [num_holes,hole_area,reject_status]=Image_Analysis_Classification_level_2(c);
                 end
                 
                 if reject_status==0
-                    [..,reject_status]=Image_Analysis_Classification_level_3(c)
+                    [eccentricity,circularity,orientation,reject_status]=Image_Analysis_Classification_level_3(c);
                 end
 
                 
