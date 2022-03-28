@@ -1,4 +1,4 @@
-function OAP_to_NETCDF_PMS(infilename,outfilename,probetype)
+function [outfilename1]=OAP_to_NETCDF_PMS(infilename,filedir,filename,probetype)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Read the raw .2d file, and then write into a NETCDF-4 file 
@@ -28,10 +28,6 @@ fid=fopen(infilename,'r','b');
        xmldoc=fgetl(fid);
     end
     
-    
-    slashpos = find(infilename == '/',1,'last');
-    filedir = infilename(1:slashpos);
-    filename = infilename(slashpos+1:end);
     
 % Sets 'ID' to the probetype keyword appropriate for that probetype.
     % The probetype keyword should be 'C1' or 'C2' for the 2DC
@@ -80,46 +76,12 @@ while feof(fid)==0 && endfile == 0
     end
     fclose(fid);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The next 20 lines are just for naming the output file:
-
-starpos = find(infilename == '*',1,'last');
-slashpos = find(infilename == '/',1,'last');
-
-if ~isempty(starpos) | outfilename == '1'
-    files = dir(infilename);
-    filenums = length(files);
-    filedir = infilename(1:slashpos);
-else
-    filenums = 1;
-end
-
-for i = 1:filenums
-    if filenums > 1 || ~isempty(starpos)
-        infilename = [filedir,files(i).name];
-    end
-    
-    if outfilename == '1'
-        outfilename = [filedir,'DIMG.',files(i).name];
-    end 
-    
-    fid=fopen(infilename,'r','b');
-
-end 
 
     % Variables that will change if certain actions occur later on
     assigned_data=1;
     skipped_data=1;
     endfile = 0;
     outfile_created=1;
-    
-    % Displays XML data that is found at the beginning of .2D files
-    
-    xmldoc = '<>';
-    while ~isequal('</OAP>',strtrim(xmldoc))
-       xmldoc=fgetl(fid);
-       disp(xmldoc)
-    end
     
     
     while feof(fid)==0 && endfile == 0

@@ -1,25 +1,23 @@
-function Image_Analysis_core(infile, outfile, probename, threshold)
+function Image_Analysis_core(infile, outfile, n, nEvery, probename, threshold)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This function is the base function for the image processsing step of OAP 
-% processing. This step utilizes parallel processing to speed up the 
-% processing speed. All probetypes are compatible with this function.
-% 
-% Inputs:
-% infile - full directory listing of the image file created during the
-%          OAP_to_NETCDF step.
-% outfile - infilename with '.proc.cdf' at the end of the file name
-% probetype - the shorthand name of the probe (ex. '2DS', 'CIPG', etc...)
-% n - the starting point to start processing
-% nEvery - the size of the data to be processed
-% threshold - shaded cip-gray threshold percentage (defaults to 50 if not
-%             provided)
+%% This function is the base function for the image processsing step of OAP 
+%% processing. This step utilizes parallel processing to speed up the 
+%% processing speed. All probetypes are compatible with this function.
+%% 
+%% Inputs:
+%% infile - full directory listing of the image file created during the OAP_to_NETCDF step.
+%% outfile - infilename with '.proc.cdf' at the end of the file name
+%% probetype - the shorthand name of the probe (ex. '2DS', 'CIPG', etc...)
+%% n - the starting point to start processing
+%% nEvery - the size of the data to be processed
+%% threshold - shaded cip-gray threshold percentage (defaults to 50 if not provided)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Setting probe information according to probe type
-%    use ProbeType to indicate three types of probes:
-%       1: 2DC/2DP 
-%       2: HVPS/2DS
-%       3: CIPG 
+%    use ProbeType to indicate three probe manufacturers:
+%       1: 2DC/2DP (PMS)
+%       2: HVPS/2DS (SPEC)
+%       3: CIPG (DMT)
 
 switch probename
     case '2DC'
@@ -27,15 +25,15 @@ switch probename
         boundarytime=85;
 
         handles.diodesize = 0.025;  % Size of diode in millimeters
-        handles.diodenum  = 32;  % Diode number
+        diodenum  = 32;  % Diode number
         probetype=1;
 
     case '2DP'
         boundary=[255 255 255 255];
-        boundarytime=0
+        boundarytime=0;
         
         handles.diodesize = 0.200;  % Size of diode in millimeters 
-        handles.diodenum  = 32;  % Diode number
+        diodenum  = 32;  % Diode number
         probetype=1;
         clockfactor = 2.; %Correction in clock cycles in timer word for 2DP probe and King Air data system in conjunction
  
@@ -44,7 +42,7 @@ switch probename
         boundarytime=0;
 
         handles.diodesize = 0.150;  % Size of diode in millimeters
-        handles.diodenum  = 128;  % Diode number
+        diodenum  = 128;  % Diode number
         probetype=2;
 
     case '2DS'
@@ -52,7 +50,7 @@ switch probename
         boundarytime=0;
 			     
         handles.diodesize = 0.010;  % Size of diode in millimeters
-        handles.diodenum  = 128;  % Diode number
+        diodenum  = 128;  % Diode number
         probetype=2;
         
     case 'CIPG'
@@ -60,74 +58,94 @@ switch probename
         boundarytime=3;
 		    
         handles.diodesize = 0.025;  % Size of diode in millimeters
-        handles.diodenum  = 64;  % Diode number
+        diodenum  = 64;  % Diode number
         probetype=3;
     otherwise 
         disp('ERROR: Probetype is not supported. Please enter one of the following: 2DP, 2DC, 2DS, HVPS, or CIPG.')
         return;
 end
 
-% Threshold defaults to 50% if it was not provided by the user
-if(~exist('threshold','var'))
-	threshold = 50;
-end
 
 % Only the 2DP has a clockfactor, otherwise it is just 1
 if(~exist('clockfactor'))
     clockfactor = 1.;
 end
 
-diodenum = handles.diodenum;
 
 % Read the particle image files
 handles.f = netcdf.open(infile,'nowrite');
 [~, handles.img_count] = netcdf.inqDim(handles.f,0); 
 warning off all
 
-
 % Create output NETCDF file and define the variables
-
 f = netcdf.create(outfile, 'CLOBBER');
 dimid0 = netcdf.defDim(f,'time',netcdf.getConstant('NC_UNLIMITED'));
 dimid1 = netcdf.defDim(f,'pos_count',2);
-dimid2 = netcdf.defDim(f,'bin_count',diodenum);
 
 % Variables that are calculated/found for all particles
-varid0 = netcdf.defVar(f,'Date','short',dimid0);
-varid1  = netcdf.defVar(f,'Time','short',dimid0);
-varid2  = netcdf.defVar(f,'msec','short',dimid0);
-varid3  = netcdf.defVar(f,'Time_in_seconds','short',dimid0);
-varid4  = netcdf.defVar(f,'SliceCount','short',dimid0);
-varid5  = netcdf.defVar(f,'PMS_overload_SPEC_wkday','double',dimid0);
-varid6  = netcdf.defVar(f,'Particle_number_all','double',dimid0);
+varid0 = netcdf.defVar(f,'Date','double',dimid0);
+varid1  = netcdf.defVar(f,'Time','double',dimid0);
+varid2  = netcdf.defVar(f,'msec','double',dimid0);
+if probetype == 1 %PMS
+    varid3  = netcdf.defVar(f,'Time_in_seconds','float',dimid0);
+elseif probetype ==2 %SPEC
+    varid3  = netcdf.defVar(f,'Time_in_seconds','double',dimid0);
+else %CIPG
+    varid3  = netcdf.defVar(f,'Time_in_seconds','double',dimid0);
+end
+%varid5  = netcdf.defVar(f,'PMS_overload_SPEC_wkday','double',dimid0);
+varid6 = netcdf.defVar(f,'channel','char',dimid0);
+netcdf.putAtt(f, varid6,'long_name','H = horizontal 2DS channel, V = vertical 2DS channel, N = not applicable');
 varid7  = netcdf.defVar(f,'position','short',[dimid1 dimid0]);
-varid8  = netcdf.defVar(f,'particle_time','short',dimid0);
+varid8  = netcdf.defVar(f,'particle_time','double',dimid0);
 varid9  = netcdf.defVar(f,'particle_millisec','short',dimid0);
-varid10  = netcdf.defVar(f,'particle_microsec','short',dimid0);
-varid11  = netcdf.defVar(f,'parent_rec_num','short',dimid0);
-varid12 = netcdf.defVar(f,'height','short',dimid0);  
-varid13 = netcdf.defVar(f,'inter_arrival','short',dimid0);
-varid14 = netcdf.defVar(f,'reject_status','short',dimid0); 
-varid15 = netcdf.defVar(f,'equiv_diam','short',dimid0);
-varid16 = netcdf.defVar(f,'area','ushort',dimid0);
-varid17 = netcdf.defVar(f,'num_holes','ushort',dimid0);
-varid18 = netcdf.defVar(f,'hole_area','ushort',dimid0); 
-varid19 = netcdf.defVar(f,'eccentricity','ushort',dimid0);
-varid20 = netcdf.defVar(f,'circularity','ushort',dimid0);
-varid21 = netcdf.defVar(f,'orientation','ushort',dimid0);
+varid10  = netcdf.defVar(f,'particle_microsec','double',dimid0);
+varid11  = netcdf.defVar(f,'parent_rec_num','double',dimid0);
+% Please note that interarrival times do not appear
+% trustworthy. They come out to 0 or even a negative
+% occasionally, which doesn't make any sense. For now
+% take these with a grain of salt, and I advise that
+% you don't make any determinations based on them. Issues
+% 
+if probetype == 1 %PMS
+    varid13 = netcdf.defVar(f,'inter_arrival','float',dimid0);
+elseif probetype ==2 %SPEC
+    varid13 = netcdf.defVar(f,'inter_arrival','double',dimid0);
+else %CIPG
+    varid13 = netcdf.defVar(f,'inter_arrival','double',dimid0);
+end
+netcdf.putAtt(f, varid13,'long_name','Time between the previous particle leaving the sample area and the current particle entering');
+varid14 = netcdf.defVar(f,'artifact_status','double',dimid0); 
+netcdf.putAtt(f, varid14,'long_name','Value corresponding to rejection criteria that failed the image. 1 = not rejected, >1 = rejected');
+varid15 = netcdf.defVar(f,'diameter','double',dimid0);
+varid19 = netcdf.defVar(f,'aspect_ratio','double',dimid0);
+netcdf.putAtt(f, varid19,'long_name','Ratio of the longest axis to the shortest axis of the image');
+varid20 = netcdf.defVar(f,'orientation','double',dimid0);
+netcdf.putAtt(f, varid20,'long_name','Angle between the x-axis and the major axis of the ellipse. Value between -90 and 90 degrees.');
+varid21 = netcdf.defVar(f,'slicecount','double',dimid0);
+varid22 = netcdf.defVar(f,'poisson_corrected','double',dimid0);
+netcdf.putAtt(f, varid22,'long_name','1 = poisson corrected, 0 = not poisson corrected');
+varid23 = netcdf.defVar(f,'perimeter','double',dimid0);
+varid24 = netcdf.defVar(f,'area','double',dimid0);
+varid25 = netcdf.defVar(f,'number_of_holes','double',dimid0);
+varid26 = netcdf.defVar(f,'number_of_pieces','double',dimid0);
+varid27 = netcdf.defVar(f,'area_ratio','double',dimid0);
+netcdf.putAtt(f, varid27,'long_name','Area / area of the smallest enclosing circle. 1 = perfect circle, 0 = perfectly noncircular, -1=poisson corrected');
+varid28 = netcdf.defVar(f,'in_status','char',dimid0);
+netcdf.putAtt(f, varid28,'long_name','How much of the particle is shown in the image. A = all in, I = center in, O = center out');
 
 netcdf.endDef(f)
 
-% Variables initialization 
+% Variable initialization 
 kk=1;
 w=-1;
 wstart = 0;
+buffer_end = 1;
 
-% Begin the processing by reading in the variable information 
-% This is the start of our loop over every individual particle
-%for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
-handles.img_count
-for i=(1:handles.img_count)
+% Begin the processing by reading in the variable information. 
+% This is the start of our loop over every individual particle.
+% n and nEvery depend on the use of parallel processing.
+for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
 
     handles.year     = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'year'    ),i-1,1);
     handles.month    = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'month'  ),i-1,1);
@@ -136,19 +154,20 @@ for i=(1:handles.img_count)
     handles.minute   = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'minute'  ),i-1,1);
     handles.second   = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'second'  ),i-1,1);
     handles.millisec = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'millisec'),i-1,1);
-    handles.tas      = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'tas'),i-1,1);
+%    handles.tas      = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'tas'),i-1,1);
     if probetype == 1 %PMS
         handles.overload    = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'overload'),i-1,1);
+        handles.tas         = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'tas'),i-1,1);
     elseif probetype ==2 %SPEC
         handles.wkday       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'wkday'),i-1,1);
-    else %CIPG
-        handles.empty       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'empty'),i-1,1);
+%     else %CIPG
+%         handles.empty       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'empty'),i-1,1);
     end
-     if mod(i,100) == 0
-        [num2str(i),'/',num2str(handles.img_count), ', ',datestr(now)]
+     if mod(i,10000) == 0
+        [num2str(i),'/',num2str(handles.img_count)]
      end
     
-    % Data sizes vary between the probetypes
+    % Read in the buffers. Buffer sizes vary between the probetypes.
     varid = netcdf.inqVarID(handles.f,'data');
     if probetype==1 %PMS
         temp = netcdf.getVar(handles.f,varid,[0, 0, i-1], [4,1024,1]);
@@ -164,11 +183,11 @@ for i=(1:handles.img_count)
     firstpart = 1;
     
     while data(j,1) ~= -1 && j < size(data,1)
-        if (isequal(data(j,:), boundary) && ( (isequal(data(j+1,1), boundarytime) || probetype==1) ) )
+        % Loop over every particle in the buffer
+        if (isequal(data(j,:), boundary) && ( (isequal(data(j+1,2), boundarytime) ) ) )
            if start ==0
                    start = 1;
            end
-
               if probetype==1
                    if start+1 > (j-1)  % Remove Corrupted Data
                         start = j + 2;
@@ -194,15 +213,39 @@ for i=(1:handles.img_count)
                 end
                 w=w+1;
                 
-                % Create binary image according to probe type
-                   
+                % Create binary image according to probe type             
                 if probetype==1    
                     ind_matrix(1:j-start-1,:) = data(start+1:j-1,:);  % 2DC has 3 slices between particles (sync word, timing word, and end of particle words)
                     c=[dec2bin(ind_matrix(:,1),8),dec2bin(ind_matrix(:,2),8),dec2bin(ind_matrix(:,3),8),dec2bin(ind_matrix(:,4),8)];
+                    
+                    channel(kk) = 'N';
                 elseif probetype==2
                     ind_matrix(1:j-start,:) = 65535 - data(start:j-1,:); % I used 1 to indicate the illuminated doides for HVPS
                     c=[dec2bin(ind_matrix(:,1),16), dec2bin(ind_matrix(:,2),16),dec2bin(ind_matrix(:,3),16),dec2bin(ind_matrix(:,4),16), ...
                     dec2bin(ind_matrix(:,5),16), dec2bin(ind_matrix(:,6),16),dec2bin(ind_matrix(:,7),16),dec2bin(ind_matrix(:,8),16)];
+                             
+                    % At the start of every new buffer,  read in the entire
+                    % buffer here. Then at each header location, I find the
+                    % H or V 'stamp', which is a 1 or a 0 in the first bit
+                    % of the timing word. 
+                    if buffer_end == 1
+                        buffer_end = 0;
+                        jj=1700;
+                        ind_matrix(1:jj-start+1,:) = 65535 - data(start:jj,:); % I used 1 to indicate the illuminated doides for HVPS
+                        test_channel=[dec2bin(ind_matrix(:,1),16), dec2bin(ind_matrix(:,2),16),dec2bin(ind_matrix(:,3),16),dec2bin(ind_matrix(:,4),16), ...
+                        dec2bin(ind_matrix(:,5),16), dec2bin(ind_matrix(:,6),16),dec2bin(ind_matrix(:,7),16),dec2bin(ind_matrix(:,8),16)];
+                    end
+                    % Read in the first bit of the timing word, where the H
+                    % or V flag is located.
+                    H_V(kk) = str2double(test_channel(j+1,1));
+                    % H=0, V=1
+                    switch H_V(kk)
+                        case 0
+                            channel(kk) = 'H';
+                        case 1
+                            channel(kk) = 'V';
+                    end
+                    
                 elseif probetype==3
                     % Set thresholding
                     
@@ -219,6 +262,8 @@ for i=(1:handles.img_count)
                     
                     c = num2str(ind_matrix, '%1d');
                     c = c';
+                    
+                    channel(kk) = 'N';
                 end
                 
                 
@@ -233,15 +278,12 @@ for i=(1:handles.img_count)
                 
                 images.position(kk,:) = [start, j-1];
                 parent_rec_num(kk)=i;
-                if(probetype < 2)
-                   particle_num(kk) = mod(kk,66536); 
-                end
                 
-                %  Get the particle time 
+                % Retrieve the particle time 
                 if probetype==1 %PMS
                     bin_convert = [dec2bin(data(header_loc,2),8),dec2bin(data(header_loc,3),8),dec2bin(data(header_loc,4),8)];
                     part_time = bin2dec(bin_convert)*clockfactor;       % Interarrival time in tas clock cycles -- needs to be multiplied by 2 for the 2DP probe
-                    part_time = part_time/tas*handles.diodesize/(10^3);                    
+                    part_time = part_time/handles.tas*handles.diodesize/(10^3);               
                     time_in_seconds(kk) = part_time;
                     PMSoverload_SPECwkday(kk)= handles.overload; 
                     
@@ -265,8 +307,8 @@ for i=(1:handles.img_count)
                         frac_time = part_time - floor(part_time);
                         frac_time = frac_time * 1000;
                         part_micro(kk) = part_micro(kk-1) + (frac_time - floor(frac_time))*1000;
-                        part_mil(kk) = part_mil(kk-1) + floor(frac_time);
-                        part_sec(kk) = part_sec(kk-1) + floor(part_time);
+                        part_mil(kk) = part_mil(kk-1) + uint16(floor(frac_time));
+                        part_sec(kk) = part_sec(kk-1) + uint16(floor(part_time));
                         part_min(kk) = part_min(kk-1);
                         part_hour(kk) = part_hour(kk-1);
                         
@@ -286,21 +328,29 @@ for i=(1:handles.img_count)
        
 
                 elseif probetype==2 %SPEC
+                    
                     PMSoverload_SPECwkday(kk)= handles.wkday;
+                    part_time = double(data(header_loc,7))*2^16+double(data(header_loc,8)); % Interarrival time in tas clock cycles
 
-                    part_time = double(data(header_loc,7))*2^16+double(data(header_loc,8));       % Interarrival time in tas clock cycles
                     part_micro(kk) = part_time;
                     part_mil(kk)   = 0;
                     part_sec(kk)   = 0;
                     part_min(kk)   = 0;
                     part_hour(kk)  = 0;
-                    time_in_seconds(kk) = part_time*(handles.diodesize/(10^3)/170);
-                    if(kk>1)
-                        images.int_arrival(kk) = part_time-part_micro(kk-1); 
+                    time_in_seconds(kk) = part_micro(kk)*(handles.diodesize/(10^3)/170);
+                    %time_in_seconds(kk) = part_micro(kk)/10^5
+                    %*************************************
+                    % If the image is not the first image in the data set,
+                    % calculate the interarrival time by subtracting the
+                    % previous particle time (in microseconds) from the
+                    % current particle time (in microseconds).
+                    if(w>0)
+                        images.int_arrival(kk) = part_time-last_part_time;
                     else
-                        images.int_arrival(kk) = 0;
+                        images.int_arrival(kk) = 999999999; % Set the first image's interarrival time to this so we know it is the first particle
                     end
-                    
+                    last_part_time = part_time; % Save the particle time so that we can use it to calculate the next particle's interarrival time
+                    %**************************************
                 elseif probetype==3 %CIPG
                      %slice[127:120] 8-bit slice count
                      %slice[119:115] 5-bit hours
@@ -323,18 +373,21 @@ for i=(1:handles.img_count)
                      part_micro(kk) = bitget(data(header_loc,47),1)*512+data(header_loc,46)*128+data(header_loc,45)*32+data(header_loc,44)*8+data(header_loc,43)*2+bitshift(data(header_loc,42),-1);
                      part_micro(kk) = part_micro(kk) + 3/8*(bitget(data(header_loc,42),1)*4+data(header_loc,41));
                      
-                     PMSoverload_SPECwkday(kk)= handles.empty;
                      
                      fours = power(4,0:7);
-                     particle_num(kk) = sum(data(header_loc,33:40).*fours);
                      fours = power(4,0:3);
                      part_tas = sum(data(header_loc, 29:32).*fours);
                      time_in_seconds(kk) = part_hour(kk) * 3600 + part_min(kk) * 60 + part_sec(kk) + part_mil(kk)/1000 + part_micro(kk)/1e6;
-                     if kk > 1
-                        images.int_arrival(kk) = time_in_seconds(kk) - time_in_seconds(kk-1);
+                     time_in_microsecs(kk) = time_in_seconds(kk) * 10^6;
+                     
+
+                     if w > 0
+                        images.int_arrival(kk) = time_in_microsecs(kk) - last_inter_arrival;
                      else
-                        images.int_arrival(kk) = time_in_seconds(kk);
+                        images.int_arrival(kk) =  999999999;
                      end
+                     
+                     last_inter_arrival = time_in_microsecs(kk); % Save the particle time so that we can use it to calculate the next particle's interarrival time
                 end
                 
                 rec_time(kk)=double(handles.hour)*10000+double(handles.minute)*100+double(handles.second);
@@ -343,56 +396,95 @@ for i=(1:handles.img_count)
                 
                 % Now we have to go through the three levels of image
                 % analysis. Images will continue to levels 2 and 3 only if
-                % they pass our criteria of the previous level(s)
+                % they pass our rejection criteria.
                 
-                num_holes = -999;
-                hole_area = -999;
-                eccentricity = -999;
-                circularity = -999;
-                orientation = -999;
+                % Set these variables to -999. They will stay -999 if the
+                % particle is rejected.
+                diameter(kk) = -999;
+                aspect_ratio(kk) = -999;
+                poisson_corrected(kk) = -999;
+                number_of_holes(kk) = -999;
+                number_of_pieces(kk) = -999;
+                perimeter(kk) = -999;
+                area(kk) = -999;
+                area_ratio(kk) = -999;
+                orientation(kk) = -999;
                 
-                [slicecount,height,reject_status,equiv_diam,area]=Image_Analysis_Classification_level_1(c);
+                
+               % Send image to level 1 to determine if the image is
+               % to be rejected or not.
+               [artifact_status(kk),slicecount(kk),in_status(kk)]=Image_Analysis_Artifact_Reject_Level_1(c,images.int_arrival(kk));
+               
+                
+                % Pass to level 2 if image has not been identified as an
+                % artifact. We identify and correct Poisson spots in this
+                % level. If the image is not corrected for a Poisson spot,
+                % then the diameter is still -999.
+                if artifact_status(kk)==1
+                    [diameter(kk),poisson_corrected(kk),number_of_holes(kk),number_of_pieces(kk),area(kk)]=Image_Analysis_Distortion_Correction_Level_2(c);
+                end
+                
+                
+                % Pass to level 3 if the image has not been rejected. 
+                if artifact_status(kk)==1 
+                    [aspect_ratio(kk),diameter(kk),perimeter(kk),area(kk),area_ratio(kk),orientation(kk)]=Image_Analysis_Calculate_Parameters_Level_3(c,poisson_corrected(kk),diameter(kk));
+                end
+                
+                if diameter(kk) ~= -999
+                    diameter(kk) = diameter(kk) * handles.diodesize * 1000; %Convert diameter to microns
+                end
+                
+                
+            if probetype == 3
+                    start = j + 3;
+                else
+                    start = j + 2;
+            end
             
-                if reject_status==0
-                    [num_holes,hole_area,reject_status]=Image_Analysis_Classification_level_2(c);
-                end
-                
-                if reject_status==0
-                    [eccentricity,circularity,orientation,reject_status]=Image_Analysis_Classification_level_3(c);
-                end
-
-                
-                
+            kk = kk + 1;
+            clear c ind_matrix
+        end
+        j = j+1;
+    end
+    
+        if kk > 1
         netcdf.putVar ( f, varid0, wstart, w-wstart+1, rec_date(:) );
         netcdf.putVar ( f, varid1, wstart, w-wstart+1, rec_time(:) );
         netcdf.putVar ( f, varid2, wstart, w-wstart+1, rec_millisec(:) );
         netcdf.putVar ( f, varid3, wstart, w-wstart+1, time_in_seconds(:) );
-        netcdf.putVar ( f, varid4, wstart, w-wstart+1, slicecount );
-        netcdf.putVar ( f, varid5, wstart, w-wstart+1, PMSoverload_SPECwkday );
-        netcdf.putVar ( f, varid6, wstart, w-wstart+1, particle_num(:) );
-        netcdf.putVar ( f, varid7, [0 wstart], [2 w-wstart+1], images.position );
+%         netcdf.putVar ( f, varid5, wstart, w-wstart+1, PMSoverload_SPECwkday(:) );
+
+        netcdf.putVar ( f, varid6, wstart, w-wstart+1, channel);
+        netcdf.putVar ( f, varid7, [0 wstart], [2 w-wstart+1], images.position' );
         netcdf.putVar ( f, varid8, wstart, w-wstart+1, part_hour(:)*10000+part_min(:)*100+part_sec(:) );
         netcdf.putVar ( f, varid9, wstart, w-wstart+1, part_mil(:) );
         netcdf.putVar ( f, varid10, wstart, w-wstart+1, part_micro(:) );
         netcdf.putVar ( f, varid11, wstart, w-wstart+1, parent_rec_num );
-        netcdf.putVar ( f, varid12, wstart, w-wstart+1, height );
-        netcdf.putVar ( f, varid13, wstart, w-wstart+1, images.int_arrival );
-        netcdf.putVar ( f, varid14, wstart, w-wstart+1, reject_status );
-        netcdf.putVar ( f, varid15, wstart, w-wstart+1, equiv_diam );
-        netcdf.putVar ( f, varid16, wstart, w-wstart+1, area );
-        netcdf.putVar ( f, varid17, wstart, w-wstart+1, num_holes );
-        netcdf.putVar ( f, varid18, wstart, w-wstart+1, hole_area );
-        netcdf.putVar ( f, varid19, wstart, w-wstart+1, eccentricity );
-        netcdf.putVar ( f, varid20, wstart, w-wstart+1, circularity );
-        netcdf.putVar ( f, varid21, wstart, w-wstart+1, orientation );
-        
+        % Please note that interarrival times do not appear
+        % trustworthy. They come out to 0 or even a negative
+        % occasionally, which doesn't make any sense. For now
+        % take these with a grain of salt, and I advise that
+        % you don't make any claims based on them.
+        netcdf.putVar ( f, varid13, wstart, w-wstart+1, images.int_arrival ); 
+        netcdf.putVar ( f, varid14, wstart, w-wstart+1, artifact_status);
+        netcdf.putVar ( f, varid15, wstart, w-wstart+1, diameter);
+        netcdf.putVar ( f, varid19, wstart, w-wstart+1, aspect_ratio);
+        netcdf.putVar ( f, varid20, wstart, w-wstart+1, orientation);
+        netcdf.putVar ( f, varid21, wstart, w-wstart+1, slicecount);
+        netcdf.putVar ( f, varid22, wstart, w-wstart+1, poisson_corrected);
+        netcdf.putVar ( f, varid23, wstart, w-wstart+1, perimeter);
+        netcdf.putVar ( f, varid24, wstart, w-wstart+1, area);
+        netcdf.putVar ( f, varid25, wstart, w-wstart+1, number_of_holes);
+        netcdf.putVar ( f, varid26, wstart, w-wstart+1, number_of_pieces);
+        netcdf.putVar ( f, varid27, wstart, w-wstart+1, area_ratio);
+        netcdf.putVar ( f, varid28, wstart, w-wstart+1, in_status);
         
         wstart = w+1;
         kk = 1;
-        clear rec_time rec_date rec_millisec part_hour part_min part_sec part_mil part_micro parent_rec_num particle_num images time_in_seconds slicecount
-
-    end
-    clear images
+        buffer_end = 1;
+        clear rec_time rec_date rec_millisec part_hour part_min part_sec part_mil part_micro parent_rec_num images time_in_seconds in_status slicecount PMSoverload_SPECwkday height artifact_status diameter aspect_ratio poisson_corrected perimeter area area_ratio number_of_holes number_of_pieces orientation channel
+        end
+        clear images
 end
 warning on all
 

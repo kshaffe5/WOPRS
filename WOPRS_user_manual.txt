@@ -1,0 +1,33 @@
+﻿*******Welcome to the University of Wyoming OAP Processing Software (WOPRS)!*******
+
+WOPRS is designed to take files directly from the OAPs aboard the UWKA and produce usable products such as particle characteristics and size distributions. WOPRS is broken down into 3 basic steps: 1) OAP_to_NETCDF, 2) Image_Analysis, and 3) Size_Distributions. OAP_to_NETCDF translates the raw data from the probes into a Netcdf file that is almost entirely homogeneous across probe types. Image_Analysis takes the images from the file generated in OAP_to_NETCDF and does 3 things: 1) Test images against various criteria and reject images that fail, 2) Correct for  distortions in non-rejected images which have a non-physical deformity, and 3) Calculate a variety of parameters for non-rejected images. Finally Size_Distributions, as the name suggests, generates size distributions.
+
+Instructions for running WOPRS:
+1) Call run_OAP_to_NETCDF with the following inputs:
+Infilename
+Probetype
+Outfilename (only used for the CIP)
+
+For the CIP, the call should look something like this: run_OAP_to_NETCDF(‘/kingair_data/pacmice16/cip/20160818/20160818143905/’,’CIP’,’/kingair_data/pacmice16/cip/20160818/20160818’). That call would produce the file: ‘/kingair_data/pacmice16/cip/20160818/DIMG.20160818.CIP.cdf’
+
+For all other probetypes outfilename can be left blank, so the call would look something like this: run_OAP_to_NETCDF(‘/kingair_data/pacmice16/2DS/20160818/base160818205231.2DS’,’2DS’). That call would produce the file: ‘/kingair_data/pacmice16/2DS/20160818/DIMG.2016160818205231.2DS.cdf’
+
+2) Call run_Image_Analysis with the following inputs:
+Infilename
+Probetype
+nChucks (max of 8, refers to number of workers during parallel processing)
+Threshold (only for cip, defaults to 50 if not provided)
+
+The call should look something like this: run_Image_Analysis(‘/kingair_data/pacmice16/2DS/20160818/DIMG.2016160818205231.2DS.cdf’,’2DS’,8,50). That call would produce the file: ‘/kingair_data/pacmice16/2DS/20160818/PROC.2016160818205231.2DS.cdf’
+
+3) Modify setup_SizeDist (optional)
+
+The setup_SizeDist file is stored in the Size_Distributions folder. This file contains information critical to generating size distributions, such as probe arm distance and bin edges. If no changes are made to this file, then the defaults will be used.
+
+4) Call run_SizeDist with the following inputs:
+ncfile
+PROC_directory
+probe
+setupfile
+
+The call should look something like this: run_SizeDist(‘/kingair_data/pacmice16/work/20160818.c1.nc’,’/kingair_data/pacmice16/2DS/20160818’,’2DS’,’/home/username/WOPRS/Size_Distributions/setup_SizeDist.txt’). That call would produce the file: ‘/kingair_data/pacmice16/2DS/20160818/SD.20160818.2DS.cdf’

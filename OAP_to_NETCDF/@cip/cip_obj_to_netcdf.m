@@ -1,4 +1,4 @@
-function cip_obj_to_netcdf(obj, outfile)
+function [outfile] = cip_obj_to_netcdf(obj, outfile)
 
 particles=0;
 
@@ -20,7 +20,7 @@ ipms  = 1;
 if exist(outfile)
     delete(outfile)
 end
-
+outfile
 f = netcdf.create(outfile, 'NETCDF4');
     
     dimid0 = netcdf.defDim(f,'time',netcdf.getConstant('NC_UNLIMITED'));
