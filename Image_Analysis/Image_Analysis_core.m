@@ -421,13 +421,13 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                 % level. If the image is not corrected for a Poisson spot,
                 % then the diameter is still -999.
                 if artifact_status(kk)==1
-                    [diameter(kk),poisson_corrected(kk),number_of_holes(kk),number_of_pieces(kk),area(kk)]=Image_Analysis_Distortion_Correction_Level_2(c);
+                    [diameter(kk),poisson_corrected(kk),number_of_holes(kk),number_of_pieces(kk),area(kk),area_ratio(kk)]=Image_Analysis_Distortion_Correction_Level_2(c);
                 end
                 
                 
                 % Pass to level 3 if the image has not been rejected. 
                 if artifact_status(kk)==1 
-                    [aspect_ratio(kk),diameter(kk),perimeter(kk),area(kk),area_ratio(kk),orientation(kk)]=Image_Analysis_Calculate_Parameters_Level_3(c,poisson_corrected(kk),diameter(kk));
+                    [aspect_ratio(kk),diameter(kk),perimeter(kk),area(kk),area_ratio(kk),orientation(kk)]=Image_Analysis_Calculate_Parameters_Level_3(c,poisson_corrected(kk),diameter(kk),area(kk),area_ratio(kk));
                 end
                 
                 if diameter(kk) ~= -999

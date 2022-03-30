@@ -1,4 +1,4 @@
-function [aspect_ratio,diameter,perimeter,area,area_ratio,orientation]=Image_Analysis_Calculate_Parameters_Level_3(image_buffer,poisson_hole,diameter)
+function [aspect_ratio,diameter,perimeter,area,area_ratio,orientation]=Image_Analysis_Calculate_Parameters_Level_3(image_buffer,poisson_hole,diameter,area_original,area_ratio_original)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This is the third level of image analysis. The purpose of this level is
 % to calculate any parameters that we are interested in.
@@ -28,7 +28,8 @@ if poisson_hole == 0
     equiv_Area = pi * (diameter/2)^2.;
     area_ratio = area / equiv_Area;
 else
-    area_ratio = -1;
+    area_ratio = area_ratio_original;
+    area = area_original;
 end
 
 end

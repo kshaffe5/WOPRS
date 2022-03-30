@@ -1,4 +1,4 @@
-function plot_size_dist
+function plot_SizeDist
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function displays a size distribution histogram using the SD files
 % generated from the WOPRS size distribution functions.

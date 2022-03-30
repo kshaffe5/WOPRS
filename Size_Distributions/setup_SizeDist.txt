@@ -9,7 +9,7 @@
 Area ratio bin edges: 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1
 
 %The following should have a value of ‘center-in’ or ‘all-in’ (omitting quotes)
-In-array particles: center-in
+In-status: center-in
 
 
 % 2DS:

@@ -4,7 +4,7 @@ setup = readlines(setupfile,'EmptyLineRule','skip');
 
 for i=1:length(setup)
     find_area = strfind(setup(i),'Area');
-    find_in_status = strfind(setup(i),'In-array');
+    find_in_status = strfind(setup(i),'In-status');
     find_diam = strfind(setup(i),[probename,' diameter']);
     find_num_diodes = strfind(setup(i),[probename,' number']);
     find_diodesize = strfind(setup(i),[probename,' diode']);
@@ -39,7 +39,7 @@ for i=1:length(setup)
                 case {'All-in','all-in','Allin','allin','All','all'}
                     in_status_selection = {'A'}; %All-in only
                 otherwise 
-                    disp('ERROR: Center-in or all-in choice does not make sense. Check to make sure center-in or all-in is chosen in the setup file.')
+                    disp('ERROR: In_status choice does not make sense. Check to make sure center-in or all-in is chosen in the setup file.')
                     return;
             end
         end

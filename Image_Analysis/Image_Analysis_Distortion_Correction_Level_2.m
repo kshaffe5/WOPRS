@@ -1,4 +1,4 @@
-function [corrected_diameter,poisson_corrected,num_holes,num_pieces,filled_area]=Image_Analysis_Distortion_Correction_Level_2(image_buffer)
+function [corrected_diameter,poisson_corrected,num_holes,num_pieces,predicted_area,area_fraction]=Image_Analysis_Distortion_Correction_Level_2(image_buffer)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This is the second level of image analysis. The purpose of this level is
 % to correct images that have been distorted dues to Poisson Spots. We will 
