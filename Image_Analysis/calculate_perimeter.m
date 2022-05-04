@@ -1,4 +1,4 @@
-function [perimeter,area,image_buffer_reversed]=calculate_perimeter(image_buffer)
+function [perimeter,area,image_buffer_reversed]=calculate_perimeter(image_buffer,poisson_corrected)
 
 perimeter=0;
 
@@ -29,12 +29,11 @@ for i = 1:x2.NumObjects
     end
 end
 
-if poisson_corrected == 0
-    filled_image = imfill(image_buffer_reversed,8,'holes');
-    stats=regionprops(filled_image,'Area');
-    area=stats.Area;
-else
-    area = 0
+
+filled_image = imfill(image_buffer_reversed,8,'holes');
+stats=regionprops(filled_image,'Area');
+area=stats.Area;
+
 
 for i=1:n_slices
     for j=1:bits

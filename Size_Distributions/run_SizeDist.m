@@ -1,4 +1,4 @@
-function run_SizeDist(ncfile,PROC_directory,probe,setupfile)
+function run_SizeDist(ncfile,PROC_directory,probe)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Uses the nc file for a given flight and uses the corresponding PROC files
 % for a given probe to generate second-by-second size distributions.
@@ -7,9 +7,7 @@ function run_SizeDist(ncfile,PROC_directory,probe,setupfile)
 % ncfile - '/kingair_data/snowie17/work/123456.c1.nc'
 % PROC_directory - '/kingair_data/snowie17/OAP_processed/123456'
 % probe - '2DS'
-% setupfile - '/home/username/WOPRS/Size_Distributions/Setup_SizeDist.txt'
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 main_nc = netcdf.open(ncfile);
 timesec = netcdf.getVar(main_nc, netcdf.inqVarID(main_nc, 'time'), 'double');
 tas = netcdf.getVar(main_nc, netcdf.inqVarID(main_nc, 'tas'),'double');
@@ -56,11 +54,8 @@ switch probe
         inFile = [PROC_directory,files(1).name];
         proc_pos = find(inFile == 'P',1,'last');
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.2DS.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DS',setupfile);
-
-        
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DS');    
     case {'HVPS','hvps'}
-
         files = dir([PROC_directory,'PROC.*.HVPS.cdf']);
         filenums = length(files);
         if filenums < 1
@@ -84,7 +79,7 @@ switch probe
             proc_pos = proc_pos(end);
         end
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.HVPS.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'HVPS',setupfile);
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'HVPS');
         
     case {'CIPG','cip','cipg','CIP'}
 
@@ -111,7 +106,7 @@ switch probe
             proc_pos = proc_pos(end);
         end
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.CIP.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'CIP',setupfile);
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'CIP');
 
     case {'2DP','2dp'}
 
@@ -138,7 +133,7 @@ switch probe
             proc_pos = proc_pos(end);
         end
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.2DP.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DP',setupfile);
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DP');
         
     case {'2DC','2dc'}
         
@@ -160,7 +155,7 @@ switch probe
         inFile = [PROC_directory,files(1).name];
         proc_pos = find(inFile == 'P',1,'last');
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.2DC.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DC',setupfile);
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DC');
         
 end
 

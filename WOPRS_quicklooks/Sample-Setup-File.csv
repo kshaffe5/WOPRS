@@ -1,0 +1,10 @@
+PROC_FILE, DIMG_file,date,Start_time, End_time,Display_particles_touching_edge,Display_rejected_particles, minD, maxD, output_file_path, Output_file_type,Read row? (use skip if you would like to skip reading in this row)
+/kingair_data/hcpi20/OAP_processed/20200811/PROC.200811193926.2DS.V.cdf,/kingair_data/hcpi20/OAP_processed/20200811/DIMG.200811193926.2DS.V.cdf,20200811,72319,72327,on,off,100,15000,/home/medwar29/Desktop/cloud_part_imgs/aug_11_CPI/,.PDF,skip
+/kingair_data/hcpi20/OAP_processed/20200811/PROC.200811193926.2DS.H.cdf,/kingair_data/hcpi20/OAP_processed/20200811/DIMG.200811193926.2DS.H.cdf,20200811,72319,72327,on,off,100,15000,/home/medwar29/Desktop/cloud_part_imgs/aug_11_CPI/,.PDF,skip
+/kingair_data/hcpi20/OAP_processed/20200811/PROC.200811194024.HVPS.cdf,/kingair_data/hcpi20/OAP_processed/20200811/DIMG.200811194024.HVPS.cdf,20200811,72319,72327,on,off,500,15000,/home/medwar29/Desktop/cloud_part_imgs/aug_11_CPI/,.PDF,skip
+/kingair_data/hcpi20/OAP_processed/20200811/PROC.20200811.cip.cdf,/kingair_data/hcpi20/OAP_processed/20200811/DIMG.20200811.cip.cdf,20200811,72319,72327,on,off,100,15000,/home/medwar29/Desktop/cloud_part_imgs/aug_11_CPI/,.PDF,skip
+l,l,0,0,0,I,I,0,0,I,I,skip
+/kingair_data/hcpi20/OAP_processed/20200811/PROC.200811193926.2DS.V.cdf,/kingair_data/hcpi20/OAP_processed/20200811/DIMG.200811193926.2DS.V.cdf,20200811,72333,72351,on,off,100,15000,/home/medwar29/Desktop/cloud_part_imgs/aug_11_CPI/,.PDF,skip
+/kingair_data/hcpi20/OAP_processed/20200811/PROC.200811193926.2DS.H.cdf,/kingair_data/hcpi20/OAP_processed/20200811/DIMG.200811193926.2DS.H.cdf,20200811,72333,72351,on,off,100,15000,/home/medwar29/Desktop/cloud_part_imgs/aug_11_CPI/,.PDF,skip
+/kingair_data/hcpi20/OAP_processed/20200811/PROC.200811194024.HVPS.cdf,/kingair_data/hcpi20/OAP_processed/20200811/DIMG.200811194024.HVPS.cdf,20200811,72333,72351,on,off,500,15000,/home/medwar29/Desktop/cloud_part_imgs/aug_11_CPI/,.PDF,skip
+/kingair_data/hcpi20/OAP_processed/20200811/PROC.20200811.cip.cdf,/kingair_data/hcpi20/OAP_processed/20200811/DIMG.20200811.cip.cdf,20200811,72333,72351,on,off,100,15000,/home/medwar29/Desktop/cloud_part_imgs/aug_11_CPI/,.PDF,skip

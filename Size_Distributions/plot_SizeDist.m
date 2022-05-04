@@ -5,9 +5,9 @@ function plot_SizeDist
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Inputs:
-infilename = {'/home/kshaffe5/test_proc_dir/20200819/SD.20200819.2DS.cdf','/home/kshaffe5/test_proc_dir/20200819/SD.20200819.HVPS.cdf'};% Must be a cell array (like an array but using curly brackets: {} )
-start_time = 82200; % In seconds from the beginning of the day
-end_time = 82220; % In seconds from the beginning of the day
+infilename = {'/home/kshaffe5/test_proc_dir/20170118/SD.20170118.2DS.cdf'};% Must be a cell array (like an array but using curly brackets: {} )
+start_time = 82500; % In seconds from the beginning of the day
+end_time = 83000; % In seconds from the beginning of the day
 colors = {'blue','red','black','green','yellow'}; % Must have at least as many colors as infilenames
 x_dimensions = [1e1 1e5];
 y_dimensions = [10e-12 10e3];

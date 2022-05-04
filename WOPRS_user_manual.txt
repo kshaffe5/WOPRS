@@ -4,7 +4,7 @@ WOPRS is designed to take files directly from the OAPs aboard the UWKA and produ
 
 Instructions for running WOPRS:
 1) Call run_OAP_to_NETCDF with the following inputs:
-Infilename
+Infilename ('2DS',etc....
 Probetype
 Outfilename (only used for the CIP)
 
@@ -14,9 +14,9 @@ For all other probetypes outfilename can be left blank, so the call would look s
 
 2) Call run_Image_Analysis with the following inputs:
 Infilename
-Probetype
+Probetype ('2DS','HVPS','etc...)
 nChucks (max of 8, refers to number of workers during parallel processing)
-Threshold (only for cip, defaults to 50 if not provided)
+Threshold (only for cip, argument is ignored if not cip)
 
 The call should look something like this: run_Image_Analysis(‘/kingair_data/pacmice16/2DS/20160818/DIMG.2016160818205231.2DS.cdf’,’2DS’,8,50). That call would produce the file: ‘/kingair_data/pacmice16/2DS/20160818/PROC.2016160818205231.2DS.cdf’
 

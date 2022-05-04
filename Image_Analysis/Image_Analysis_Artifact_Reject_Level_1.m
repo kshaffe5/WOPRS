@@ -1,4 +1,4 @@
-function [artifact_status,slicecount,in_status]=Image_Analysis_Artifact_Reject_Level_1(image_buffer,interarrival_time)
+function [artifact_status,slicecount,in_status]=Image_Analysis_Artifact_Reject_Level_1(image_buffer)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This is the first level of image analysis. The purpose of this level is
 % identify and reject artifacts. Images are rejected as one of four
@@ -18,7 +18,6 @@ min_y = 0;
 max_y = 0;
 min_x = 0;
 max_x = 0;
-    
     
 image_size = size(image_buffer);
 n_slices  = image_size(1);
@@ -65,63 +64,38 @@ else
     in_status = 'A'; %All-in
 end
     
-    
 if (notempty==0) %If the image has no shadowed pixels, then reject it
     artifact_status = 2;
     return;
 end
-
 
 % Calculate the x/y aspect ratio
 slicecount= max_x - min_x + 1;
 width = max_y - min_y + 1;
 aspect_ratio = slicecount / width;
 
-
-%**************************************************************************
-% We don't know how to handle interarrival times right now. Interarrival
-% times are negative or zero sometimes, but they don't seem to correspond 
-% with shattered particles. I have seen this occur with the 2DS and the
-% CIP. It's possible that this is a issue with processing, but others have
-% seen this issue as well, so it's not likely, at least with the 2DS. For
-% now interarrival times will be disregarded as untrustworthy. However,
-% shattered particles still seem to be getting rejected as
-% 'multiple/broken', which is artifact status 6.
-
-% % Check the interarrival time to see if the image is a
-% % shattered image. If it is, we reject the image before it
-% % as well. 
-% if interarrival_time <= 1 % Threshold interarrival time is 1 * 10^-6 s
-%     artifact_status = 3;
-%     return; % Set the artifact_status to 1, and then exit this function
-% end
-%
-%**************************************************************************
-
 % If the image is 10+ times longer than it is wide, reject it. This is supposed
 % to catch 'streakers', but may also catch stuck bits.
 if aspect_ratio >= 10
-    artifact_status = 4;
+    artifact_status = 3;
     return;
 end
 
 %If the image is 4+ pixels in length, and only one diode is shadowed,
 %reject it. This is supposed to catch stuck bits.
 if width==1 && slicecount>=4 
-    artifact_status = 5;
+    artifact_status = 4;
     return;
 end
-
 
 num_shadowed_first_slice = sum(image_buffer_reversed(1,:));
 fraction_shadowed = num_shadowed_first_slice / bits;
 % If the first slice in the image is at least 10% shadowed, we reject
 % it as a 'sliced' image.
 if fraction_shadowed >= 0.1
-    artifact_status = 6;
+    artifact_status = 5;
     return;
 end
-
 
 % Check for images with multiple particles. BWCONNCOMP finds the individual
 % pieces of an image. I then find the total area of all of the pieces put
@@ -147,7 +121,7 @@ if x2.NumObjects >1
     % This is supposed to reject images with multiple particles, and/or 
     % broken images.
     if (((total_area < 300) && (sorted(x2.NumObjects) < 75) && (test_ratio < 0.8)) || ((sorted(x2.NumObjects) < smaller_pieces*1.25) && (x2.NumObjects > 5) && (sorted(x2.NumObjects) < 200)))
-        artifact_status=7; 
+        artifact_status=6; 
     end
 end
 

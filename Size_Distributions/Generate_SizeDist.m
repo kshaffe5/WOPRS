@@ -1,4 +1,4 @@
-function Generate_SizeDist(PROC_files,num_rejects,outfile,tas,timehhmmss,probename,setupfile)
+function Generate_SizeDist(PROC_files,num_rejects,outfile,tas,timehhmmss,probename)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function is called by run_SizeDist to generate NetCDF files
 % containing size distribution data. 
@@ -18,78 +18,33 @@ function Generate_SizeDist(PROC_files,num_rejects,outfile,tas,timehhmmss,probena
 %% Begin generating the size distribution
 disp(['Generating Size Distribution for the ',probename]);
 
- 
 %% Read the setup file with bin edges
-[area_ratio_bin_edges,num_ar_bins,answer_status,in_status_selection,kk,num_bins,mid_bin_diams,num_diodes,diodesize,armdst,wavelength]=read_setup(setupfile,probename);
+[area_ratio_bin_edges,num_ar_bins,In_status,in_status_value,diam_bin_edges,num_diam_bins,mid_bin_diams]=setup_SizeDist(probename);
 
-
-% Seperate probes by manufacturer:
-%       1: 2DC/2DP (PMS)
-%       2: HVPS/2DS (SPEC)
-%       3: CIPG (DMT)
-switch probename
-    case {'HVPS' , '2DS'}
-        probetype=2;
-    case 'CIP'
-        probetype=3;
-    case {'2DC' , '2DP'}
-        probetype=1;
-end
-
-
-%% Create outfile and define variables
-f = netcdf.create(outfile, 'clobber');
-dimid0 = netcdf.defDim(f,'time',length(timehhmmss));
-dimid1 = netcdf.defDim(f,'bin_count',num_bins);
-dimid2 = netcdf.defDim(f,'reject_status',num_rejects);
-dimid3 = netcdf.defDim(f,'ar_bin_count',num_ar_bins);
-
-varid00 = netcdf.defVar(f,'time','double',dimid0);
-varid0 = netcdf.defVar(f,'Reject_counts','double',[dimid0 dimid1 dimid2]);
-netcdf.putAtt(f, varid0,'long_name',['Binwise counts calculated using ',answer_status,' images']);
-varid1 = netcdf.defVar(f,'bin_min','double',dimid1);
-netcdf.putAtt(f, varid1,'long_name','Lower end of each diameter bin');
-varid2 = netcdf.defVar(f,'bin_max','double',dimid1);
-netcdf.putAtt(f, varid2,'long_name','Upper end of each diameter bin');
-varid3 = netcdf.defVar(f,'bin_mid','double',dimid1);
-netcdf.putAtt(f, varid3,'long_name','Midpoint of each diameter bin');
-varid4 = netcdf.defVar(f,'Area_ratio_counts','double',[dimid0 dimid3]);
-netcdf.putAtt(f, varid4,'long_name','Binwise counts of area ratio');
+%% Create NaN arrays
+accepted_counts  = zeros(length(timehhmmss),num_diam_bins)*NaN;
+total_accepted_counts = zeros(length(timehhmmss),1)*NaN;
+total_rejected_counts = zeros(length(timehhmmss),num_rejects)*NaN;
+area_ratio_counts = zeros(length(timehhmmss),num_ar_bins)*NaN;
+sample_volume = zeros(length(timehhmmss),num_diam_bins)*NaN;
+size_dist = zeros(length(timehhmmss),num_diam_bins)*NaN;
 switch probename
     case '2DS'
-        varid6 = netcdf.defVar(f,'Reject_counts_H','double',[dimid0 dimid1 dimid2]);
-        netcdf.putAtt(f, varid6,'long_name',['Binwise counts calculated using ',answer_status,' images from only the horizontal channel of the 2DS']);
-        varid7 = netcdf.defVar(f,'Reject_counts_V','double',[dimid0 dimid1 dimid2]);
-        netcdf.putAtt(f, varid7,'long_name',['Binwise counts calculated using ',answer_status,' images from only the vertical channel of the 2DS']);
-        varid8 = netcdf.defVar(f,'size_dist_2DS_H','double',[dimid0 dimid1 dimid2]);
-        netcdf.putAtt(f, varid8,'long_name',['Size distribution for horizontal channel only calculated using ',answer_status,' images']);
-        varid9 = netcdf.defVar(f,'size_dist_2DS_V','double',[dimid0 dimid1 dimid2]);
-        netcdf.putAtt(f, varid9,'long_name',['Size distribution for vertical channel only calculated using ',answer_status,' images']);
-        size_dist_H = zeros(length(timehhmmss),num_bins,num_rejects)*NaN;
-        size_dist_V = zeros(length(timehhmmss),num_bins,num_rejects)*NaN;
+        accepted_counts_H = zeros(length(timehhmmss),num_diam_bins)*NaN;
+        accepted_counts_V = zeros(length(timehhmmss),num_diam_bins)*NaN;
+        size_dist_H = zeros(length(timehhmmss),num_diam_bins)*NaN;
+        size_dist_V = zeros(length(timehhmmss),num_diam_bins)*NaN;
 end
-varid10 = netcdf.defVar(f,['size_dist_',probename],'double',[dimid0 dimid1 dimid2]);
-netcdf.putAtt(f, varid10,'long_name',['Size distribution calculated using ',answer_status,' images']);
+min_bin_diams = diam_bin_edges(1:end-1);
+max_bin_diams = diam_bin_edges(2:end);
 
-netcdf.endDef(f)
-
-
-% Create NaN arrays for every second
-reject_count  = zeros(length(timehhmmss),num_bins,num_rejects)*NaN;
-area_ratio_count = zeros(length(timehhmmss),num_ar_bins)*NaN;
-reject_count_H = zeros(length(timehhmmss),num_bins,num_rejects)*NaN;
-reject_count_V = zeros(length(timehhmmss),num_bins,num_rejects)*NaN;
-sample_volume = zeros(length(timehhmmss),num_bins);
-size_dist = zeros(length(timehhmmss),num_bins,num_rejects)*NaN;
-
-min_bin_diams = kk(1:end-1);
-max_bin_diams = kk(2:end);
-
+%***************************************************************************************************************
+%***************************************************************************************************************
 
 %% Loop over each PROC file in the directory
 for x = 1:length(PROC_files)
     
-    % Define input and output files and initialize time variable
+    % Define input file and initialize time variable
     disp(['Reading in file: ',PROC_files(x).folder,'/',PROC_files(x).name])
     infile = netcdf.open([PROC_files(x).folder,'/',PROC_files(x).name],'nowrite');
     times = netcdf.getVar(infile,netcdf.inqVarID(infile,'Time'));
@@ -105,13 +60,20 @@ for x = 1:length(PROC_files)
             channel = netcdf.getVar(infile,netcdf.inqVarID(infile,'channel'));
     end
     in_status = netcdf.getVar(infile,netcdf.inqVarID(infile,'in_status'));
-
+    
+    % Read in global attributes necessary for sample area calculation
+    diodesize = netcdf.getAtt(infile, netcdf.getConstant('NC_GLOBAL'),'Diode size');
+    num_diodes = netcdf.getAtt(infile, netcdf.getConstant('NC_GLOBAL'),'Number of diodes');
+    armdst = netcdf.getAtt(infile, netcdf.getConstant('NC_GLOBAL'),'Arm distance');
+    wavelength = netcdf.getAtt(infile, netcdf.getConstant('NC_GLOBAL'),'Wavelength');
+    num_rejects = netcdf.getAtt(infile, netcdf.inqVarID(infile,'artifact_status'),'Number of artifact statuses');
+    
+    %% Create the output file
+    [f,varid]=define_outfile_SizeDist(probename,num_rejects,timehhmmss,outfile,num_ar_bins,num_diam_bins,In_status);
 
     % Fix flight times if they span multiple days
     timehhmmss(find(diff(timehhmmss)<0)+1:end) = timehhmmss(find(diff(timehhmmss)<0)+1:end) + 240000;
-    tas_time = floor(timehhmmss/10000)*3600+floor(mod(timehhmmss,10000)/100)*60+floor(mod(timehhmmss,100));
     timehhmmss = mod(timehhmmss, 240000);
-    
 
     % Find the first and last time that is available in both the PROC and
     % aircraft files. We will loop over these times to create the SD file.
@@ -127,11 +89,10 @@ for x = 1:length(PROC_files)
     end_index = min(end_index,length(timehhmmss));
 
 
-    
     %% Calculate sample area depending on whether we are considering center-in or only all-in images 
     
     % Calculate for each bin
-    switch answer_status
+    switch In_status
         case {'Center-in','center-in','Centerin','centerin','Center','center'}
             for i=1:length(mid_bin_diams)
                 DOF = (4*mid_bin_diams(i)^2) / wavelength;%Calculate depth-of-field
@@ -158,15 +119,23 @@ for x = 1:length(PROC_files)
         
         % Set the counts to 0 at every time when there is both an aircraft
         % file and a PROC file. NaN's otherwise
-        reject_count(i,:,:) = 0;
-        area_ratio_count(i,:) = 0;
-        reject_count_H(i,:,:) = 0;
-        reject_count_V(i,:,:) = 0;
+        accepted_counts(i,:) = 0;
+        total_accepted_counts(i) = 0;
+        total_rejected_counts(i,:) = 0;
+        area_ratio_counts(i,:) = 0;
+        switch probename
+            case '2DS'
+                accepted_counts_H(i,:) = 0;
+                accepted_counts_V(i,:) = 0;
+                size_dist_H = zeros(length(timehhmmss),num_diam_bins)*NaN;
+                size_dist_V = zeros(length(timehhmmss),num_diam_bins)*NaN;
+        end
+        size_dist(i,:) = 0;
         
         %% Calculate sample volume second-by-second using tas from aircraft data
         sample_volume(i,:) = (tas(i)*100) * sample_area; %In cm^3
         
-        % Read in the area ratio and rejection criteria for
+        % Read in the area ratio and artifact status for
         % the particles at this time. Then add to appropriate counts
         if ~isempty(good_indices) % If there is more than 1 particle in this second, continue
             good_diameters = diameter(good_indices); % Find the diameters of all particles in this time
@@ -182,20 +151,21 @@ for x = 1:length(PROC_files)
                 %% Rejection Counts
                 % Find which bin the given diameter fits into
                 switch good_in_status(j)
-                    case in_status_selection
+                    case in_status_value
                         switch good_artifacts(j)
                             case 1 % Particle is not rejected
                                 %% Rejection counts
-                                lower_bin_numbers = find(kk <= good_diameters(j));
+                                lower_bin_numbers = find(diam_bin_edges <= good_diameters(j));
                                 bin_number = lower_bin_numbers(end); % This is the number of the bin that the diameter fits into
-                                reject_count(i,bin_number,good_artifacts(j)) = reject_count(i,bin_number,good_artifacts(j)) + 1;
+                                accepted_counts(i,bin_number) = accepted_counts(i,bin_number) + 1;
+                                total_accepted_counts(i) = total_accepted_counts(i) + 1;
                                 switch probename
                                     case '2DS'
                                         switch good_channel(j)
                                             case 'H'
-                                                reject_count_H(i,bin_number,good_artifacts(j)) = reject_count_H(i,bin_number,good_artifacts(j)) + 1;
+                                                accepted_counts_H(i,bin_number) = accepted_counts_H(i,bin_number) + 1;
                                             case 'V'
-                                                reject_count_V(i,bin_number,good_artifacts(j)) = reject_count_V(i,bin_number,good_artifacts(j)) + 1;
+                                                accepted_counts_V(i,bin_number) = accepted_counts_V(i,bin_number) + 1;
                                             otherwise
                                                 disp('Error')
                                                 disp('Shutting down')
@@ -206,56 +176,53 @@ for x = 1:length(PROC_files)
                                 lower_bin_numbers = find(area_ratio_bin_edges <= good_area_ratios(j));
                                 bin_number = lower_bin_numbers(end); % This is the number of the bin that the area ratio fits into
                                 % Add counts to area ratio bins
-                                area_ratio_count(i,bin_number) = area_ratio_count(i,bin_number) + 1;
+                                area_ratio_counts(i,bin_number) = area_ratio_counts(i,bin_number) + 1;
                         
                             otherwise
-                                bin_number = 1;
-                        
-                                reject_count(i,bin_number,good_artifacts(j)) = reject_count(i,bin_number,good_artifacts(j)) + 1;
-                                switch probename
-                                    case '2DS'
-                                        if good_channel(j) == 0
-                                            reject_count_H(i,bin_number,good_artifacts(j)) = reject_count_H(i,bin_number,good_artifacts(j)) + 1;
-                                        else
-                                            reject_count_V(i,bin_number,good_artifacts(j)) = reject_count_V(i,bin_number,good_artifacts(j)) + 1;
-                                        end
-                                end
-                        end
-                                      
+                                total_rejected_counts(i,good_artifacts(j)) = total_rejected_counts(i,good_artifacts(j)) + 1;
+                        end             
                 end
             end
-             
         end
-        
     end
-    
 end
-    for k=1:num_rejects
-        size_dist(:,:,k) = reject_count(:,:,k) ./ sample_volume(:,:);
-        switch probename
-            case '2DS'
-                size_dist(:,:,k) = size_dist(:,:,k) / 2; %Need to divide concentrations by 2 becuase the 2DS has two channels
-                size_dist_H(:,:,k) = reject_count_H(:,:,k) ./ sample_volume(:,:);
-                size_dist_V(:,:,k) = reject_count_V(:,:,k) ./ sample_volume(:,:);
-        end
-    end
-        
-    netcdf.putVar ( f, varid00, timehhmmss);
-    netcdf.putVar ( f, varid0, reject_count);
-    netcdf.putVar ( f, varid1, min_bin_diams);
-    netcdf.putVar ( f, varid2, max_bin_diams);
-    netcdf.putVar ( f, varid3, mid_bin_diams);
-    netcdf.putVar ( f, varid4, area_ratio_count);
-        
+
+% Calculate size distributions
+size_dist = accepted_counts ./ sample_volume;
+switch probename
+    case '2DS'
+        size_dist = size_dist ./ 2; %Need to divide concentrations by 2 becuase the 2DS has two channels
+        size_dist_H = accepted_counts_H ./ sample_volume;
+        size_dist_V = accepted_counts_V ./ sample_volume;
+end
+
+% Normalize by bin width
+for i=1:num_diam_bins
+    size_dist(:,i) = accepted_counts(:,i) ./ (max_bin_diams(i) - min_bin_diams(i));
     switch probename
         case '2DS'
-            netcdf.putVar ( f, varid6, reject_count_H);
-            netcdf.putVar ( f, varid7, reject_count_V);
-            netcdf.putVar ( f, varid8, size_dist_H);
-            netcdf.putVar ( f, varid9, size_dist_V);
+            size_dist_H(:,i) = accepted_counts_H(:,i) ./ (max_bin_diams(i) - min_bin_diams(i));
+            size_dist_V(:,i) = accepted_counts_V(:,i) ./ (max_bin_diams(i) - min_bin_diams(i));
     end
-    
-    netcdf.putVar ( f, varid10, size_dist);
+end
+        
+% Assign data to outfile variables
+netcdf.putVar ( f, varid.time, timehhmmss);
+netcdf.putVar ( f, varid.Accepted_counts, accepted_counts);
+netcdf.putVar ( f, varid.total_accepted_counts, total_accepted_counts);
+netcdf.putVar ( f, varid.bin_min, min_bin_diams);
+netcdf.putVar ( f, varid.bin_max, max_bin_diams);
+netcdf.putVar ( f, varid.bin_mid, mid_bin_diams);
+netcdf.putVar ( f, varid.Area_ratio_counts, area_ratio_counts);
+netcdf.putVar ( f, varid.total_reject_counts, total_rejected_counts);       
+switch probename
+    case '2DS'
+        netcdf.putVar ( f, varid.Accepted_counts_H, accepted_counts_H);
+        netcdf.putVar ( f, varid.Accepted_counts_V, accepted_counts_V);
+        netcdf.putVar ( f, varid.size_dist_2DS_H, size_dist_H);
+        netcdf.putVar ( f, varid.size_dist_2DS_V, size_dist_V);
+end
+netcdf.putVar ( f, varid.size_dist, size_dist);
 
 netcdf.close(f);
 
