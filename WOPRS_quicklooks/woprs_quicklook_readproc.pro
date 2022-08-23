@@ -108,10 +108,20 @@ varid = NCDF_VARID(PROC, 'channel')
 NCDF_VARGET, PROC, varid, channel
 varid = NCDF_VARID(PROC, 'number_of_holes')
 NCDF_VARGET, PROC, varid, num_holes
+varid = NCDF_VARID(PROC, 'number_of_pieces')
+NCDF_VARGET, PROC, varid, num_pieces
 varid = NCDF_VARID(PROC, 'diameter')
 NCDF_VARGET, PROC, varid, diam
 varid = NCDF_VARID(PROC, 'in_status')
 NCDF_VARGET, PROC, varid, in_status
+varid = NCDF_VARID(PROC, 'area_ratio')
+NCDF_VARGET, PROC, varid, area_ratio
+varid = NCDF_VARID(PROC, 'roundness')
+NCDF_VARGET, PROC, varid, roundness
+varid = NCDF_VARID(PROC, 'circularity')
+NCDF_VARGET, PROC, varid, circularity
+varid = NCDF_VARID(PROC, 'aspect_ratio')
+NCDF_VARGET, PROC, varid, aspect_ratio
 
 
 ;Loop over all particles -- first and last are provided and currently represent the first
@@ -149,8 +159,8 @@ ENDCASE
   ;DATA LENGTH, DATA WIDTH, TMP LENGTH, AND TEMP WIDTH
 RUNNING_VARIABLES=CREATE_STRUCT('HHMMSS', HHMMSS, 'START_TIME_INDEX', START_TIME_INDEX, 'END_TIME_INDEX', END_TIME_INDEX, $
   'POS', POS, 'SCNT', SCNT, 'REC', REC, 'ARTIFACT_STATUS', artifact_status, 'interarrival_reject', interarrival_reject, 'DIAMETER', DIAM, 'POISSON_CORRECTED',poisson_corrected, $
-  'TIME_DISP', TIME_DISP, 'POS_DISP', POS_DISP, 'PART_CNT', PART_CNT, 'DISP_PARTS', DISP_PARTS, 'DATA_LENGTH', DATA_LENGTH, $
-  'DATA_WIDTH', DATA_WIDTH, 'TMP_LENGTH', TMP_LENGTH, 'TMP_WIDTH', TMP_WIDTH,'num_holes',num_holes,'channel', channel,'in_status',in_status)
+  'TIME_DISP', TIME_DISP, 'POS_DISP', POS_DISP, 'PART_CNT', PART_CNT, 'DISP_PARTS', DISP_PARTS, 'DATA_LENGTH', DATA_LENGTH,'roundness',roundness, 'num_pieces', num_pieces, $
+  'DATA_WIDTH', DATA_WIDTH, 'TMP_LENGTH', TMP_LENGTH, 'TMP_WIDTH', TMP_WIDTH,'num_holes',num_holes,'channel', channel,'in_status',in_status,'area_ratio',area_ratio,'circularity',circularity,'aspect_ratio',aspect_ratio)
 
 ; CREATES THE FIRST AND LAST VARIABLE, THESE REPRESENT THE FIRST AND LAST POSSIBLE PARTICLES WITHIN THE GIVEN TIME
 ;THESE GET SENT BACK TO THE MASTER PROGRAM

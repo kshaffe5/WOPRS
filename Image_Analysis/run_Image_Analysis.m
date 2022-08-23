@@ -1,15 +1,24 @@
 function run_Image_Analysis(infilename, probetype, nChucks, threshold)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% This is the lead function in the Image_Analysis processing step.
 %% 
 %% Inputs: infilename, probetype, nChucks(max of 8), and threshold
 %% (Threshold is only applicable to the CIP, and it represents the shading
 %% threshold. It defaults to 50 if not provided.)
 %%
+%% Example inputs:
+%% infilename = '/home/username/DIMG.ddmmyyyyhhmmss.2DS.cdf'
+%% probetype = '2DS'
+%% nchucks = 8
+%% threshold = 50
+%%
 %% Edited by Adam Majewski and Kevin Shaffer
 %% 
 %% Last edits made: 3/1/2022
 %%
-%% Please consult the Read_ME.txt file or the wiki on Github for more detailed information and instructions
+%% Please consult the Read_ME.txt file or the wiki on Github for more 
+%% detailed information and instructions.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 starpos = find(infilename == '*',1,'last');
 DIMGpos = find(infilename == '.',1,'first');

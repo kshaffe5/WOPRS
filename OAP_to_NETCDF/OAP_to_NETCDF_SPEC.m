@@ -17,7 +17,6 @@ fid=fopen(infilename,'r','l');
     
 tas = 1; % Set tas to 1 before the first set of housekeeping data
     
-    
     %%  Create the housekeeping file
     f0 = netcdf.create(outfilename0, 'CLOBBER');
 

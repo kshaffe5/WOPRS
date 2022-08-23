@@ -46,11 +46,11 @@ end
 
     
 if strcmpi('2DS',probetype)
-    periodpos = find(infilename == '.',1,'last')
-    basepos = find(infilename == 'e',1,'last')
-    slashpos = find(infilename == '/',1,'last')
-    filedir = infilename(1:slashpos)
-    filename = infilename(basepos+1:periodpos-1)
+    periodpos = find(infilename == '.',1,'last');
+    basepos = find(infilename == 'e',1,'last');
+    slashpos = find(infilename == '/',1,'last');
+    filedir = infilename(1:slashpos);
+    filename = infilename(basepos+1:periodpos-1);
     outfilename0=[filedir,'DIMG.',filename,'.2DS.HK.cdf'] % Housekeeping data
     outfilename1=[filedir,'DIMG.',filename,'.2DS.cdf'] % Image data   
     outfilename2=[filedir,filename,'.MK.2DS.csv'] % Automask data
@@ -70,18 +70,18 @@ elseif strcmpi('CIP',probetype)
     OAP_to_NETCDF_CIP(infilename,outfilename,DIMGname)
 elseif strcmpi('2DC',probetype)
     periodpos = find(infilename == '.',1,'last');
-    filedir = infilename(1:slashpos)
-    filename = infilename(slashpos+1:periodpos-1)
+    filedir = infilename(1:slashpos);
+    filename = infilename(slashpos+1:periodpos-1);
     createdfile = OAP_to_NETCDF_PMS(infilename,outfilename,'2DC')
 elseif strcmpi('2DP',probetype)
     periodpos = find(infilename == '.',1,'last');
-    filedir = infilename(1:slashpos)
-    filename = infilename(slashpos+1:periodpos-1)
+    filedir = infilename(1:slashpos);
+    filename = infilename(slashpos+1:periodpos-1);
     createdfile = OAP_to_NETCDF_PMS(infilename,outfilename,'2DP')
 elseif strcmpi('2D',probetype)
     periodpos = find(infilename == '.',1,'last');
-    filedir = outfilename(1:slashpos)
-    filename = outfilename(slashpos+1:periodpos-1)
+    filedir = outfilename(1:slashpos);
+    filename = outfilename(slashpos+1:periodpos-1);
     createdfile = OAP_to_NETCDF_PMS(infilename,filedir,filename,'2DC')
     createdfile = OAP_to_NETCDF_PMS(infilename,filedir,filename,'2DP')
 else

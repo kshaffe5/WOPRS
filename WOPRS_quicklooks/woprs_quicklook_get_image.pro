@@ -6,22 +6,52 @@ FUNCTION WOPRS_QUICKLOOK_GET_IMAGE, STARTING_VARIABLES, FILE_VARIABLES, RUNNING_
   DIMG_FILE=STARTING_VARIABLES.FIELD02
 
   Display_rejected_particles=STARTING_VARIABLES.FIELD06
+  artifact_status_choice = STARTING_VARIABLES.FIELD11
+  length_asc = SIZE(artifact_status_choice)
+  Display_all_diams = STARTING_VARIABLES.FIELD14
   minD=LONG(STARTING_VARIABLES.FIELD07)
   maxD=LONG(STARTING_VARIABLES.FIELD08)
+  Display_interarrival_rejected = STARTING_VARIABLES.FIELD13
+  Display_all_in_statuses = STARTING_VARIABLES.FIELD15
+  good_in_status = STARTING_VARIABLES.FIELD12
+  length_gis = SIZE(good_in_status)
+  Display_any_holes = STARTING_VARIABLES.FIELD16
+  max_holes = STARTING_VARIABLES.FIELD17
+  min_holes = STARTING_VARIABLES.FIELD18
+  Display_any_pieces = STARTING_VARIABLES.FIELD19
+  max_pieces = STARTING_VARIABLES.FIELD20
+  min_pieces = STARTING_VARIABLES.FIELD21
+  Display_Poisson_corrected = STARTING_VARIABLES.FIELD22
+  Display_not_Poisson_corrected = STARTING_VARIABLES.FIELD23
+  Display_all_aspect_ratios = STARTING_VARIABLES.FIELD24
+  max_aspect_ratio = STARTING_VARIABLES.FIELD25
+  min_aspect_ratio = STARTING_VARIABLES.FIELD26
+  Display_all_circ = STARTING_VARIABLES.FIELD27
+  max_circ = STARTING_VARIABLES.FIELD28
+  min_circ = STARTING_VARIABLES.FIELD29
+  Display_all_roundness = STARTING_VARIABLES.FIELD30
+  max_roundness = STARTING_VARIABLES.FIELD31
+  min_roundness = STARTING_VARIABLES.FIELD32
+  
+  
   ;The next variable is from FILE_VARAIBLES
   PRBTYPE=FILE_VARIABLES.PRBTYPE
   ;The last block is from RUNNING_VARIABLES
   POS=RUNNING_VARIABLES.POS
   REC=RUNNING_VARIABLES.REC
 
+
   POISSON_CORRECTED=RUNNING_VARIABLES.POISSON_CORRECTED
   ARTIFACT_STATUS=RUNNING_VARIABLES.ARTIFACT_STATUS
-  
+  roundness=RUNNING_VARIABLES.roundness
   interarrival_reject=RUNNING_VARIABLES.interarrival_reject
-  
+  roundness=RUNNING_VARIABLES.area_ratio
+  aspect_ratio=RUNNING_VARIABLES.aspect_ratio
+  circularity=RUNNING_VARIABLES.circularity
   channel=RUNNING_VARIABLES.channel
   in_status=RUNNING_VARIABLES.in_status
   num_holes=RUNNING_VARIABLES.num_holes
+  num_pieces=RUNNING_VARIABLES.num_pieces
   SCNT=RUNNING_VARIABLES.SCNT
   diam=RUNNING_VARIABLES.diameter
   DISP_PARTS=RUNNING_VARIABLES.DISP_PARTS
@@ -49,28 +79,64 @@ FUNCTION WOPRS_QUICKLOOK_GET_IMAGE, STARTING_VARIABLES, FILE_VARIABLES, RUNNING_
     IF (scnt[i] LT 1) THEN CONTINUE ;particle has no slice count, skip it
     
     IF (Display_rejected_particles EQ 'off') OR (Display_rejected_particles EQ 'OFF') THEN BEGIN
-        ;with our data sets we found that the following particle rejections were ok and should be included: 48,104,72,117,82
-;        IF ((ARTIFACT_STATUS[I] NE 1) OR (in_status[I] NE 65)) THEN CONTINUE
-;        IF (num_holes[I] NE 1) THEN CONTINUE
-;        IF (H_or_V[I] NE 1) THEN CONTINUE
-;        IF (ARTIFACT_STATUS[I] NE 1) THEN CONTINUE
-;        IF (DIAM[I] LT 50) THEN CONTINUE
-;        IF (POISSON_CORRECTED[I] NE 1) THEN CONTINUE
-        IF (interarrival_reject[I] NE 1) THEN CONTINUE ;NE 1 for below threshold, NE 0 for above
+         artifact_accept = 0
+         for xx = 0,length_asc[1]-1 DO BEGIN ;Loop over all desired artifact statuses
+            IF (ARTIFACT_STATUS[I] EQ artifact_status_choice(xx)) THEN artifact_accept = 1
+         endfor
+         IF (artifact_accept NE 1) THEN CONTINUE
     ENDIF 
-
-    ;If auto_reject is equal to 122 then this means that particle has a zero diameter image(in other words it should be a blank space). But that is not always the case.
-    ;Due to the computer thinking that it is a zero diameter image it has a diameter of not a number (NaN).
-    ;If we want to display rejected particles and set a minium or maxium diameter past 0 or 15000 then we want to be able to read the diameter of every particle
-    ;The following lines allow use to not display a particle if we are setting a set of diameters and if we are displaying rejected particles.
-    ;If we do not want to display rejected particles then we will dismiss all paticles that have a auto_reject of 50 or higher thus stopping this issues befor it occurs.
-    IF (minD GT 0) OR (maxD LT 15000) THEN BEGIN
-      IF (ARTIFACT_STATUS[i] EQ 2) THEN CONTINUE
-
+    
+    IF (Display_all_diams EQ 'off') OR (Display_all_diams EQ 'OFF') THEN BEGIN
+      IF (diam[i] LT minD) THEN CONTINUE        ;particle is too small, skip it
+      IF (diam[i] GT maxD) THEN CONTINUE        ;particle is too large, skip it
     ENDIF
     
-    IF (diam[i] LT minD) THEN CONTINUE        ;particle is too small, skip it
-    IF (diam[i] GT maxD) THEN CONTINUE        ;particle is too large, skip it
+    IF (Display_interarrival_rejected EQ 'off') OR (Display_interarrival_rejected EQ 'OFF') THEN BEGIN
+      IF (interarrival_reject[I] EQ 1) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_all_in_statuses EQ 'off') OR (Display_all_in_statuses EQ 'OFF') THEN BEGIN
+      in_status_accept = 0
+      for xx = 0,length_gis[1]-1 DO BEGIN ;Loop over all desired artifact statuses
+        IF (in_status[I] EQ good_in_status(xx)) THEN in_status_accept = 1
+      endfor
+      IF (in_status_accept NE 1) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_any_holes EQ 'off') OR (Display_any_holes EQ 'OFF') THEN BEGIN
+      IF (num_holes[i] LT min_holes) THEN CONTINUE  
+      IF (num_holes[i] GT max_holes) THEN CONTINUE 
+    ENDIF
+    
+    IF (Display_any_pieces EQ 'off') OR (Display_any_pieces EQ 'OFF') THEN BEGIN
+      IF (num_pieces[i] LT min_pieces) THEN CONTINUE
+      IF (num_pieces[i] GT max_pieces) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_Poisson_corrected EQ 'off') OR (Display_Poisson_corrected EQ 'OFF') THEN BEGIN
+      IF (POISSON_CORRECTED[I] EQ 1) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_not_Poisson_corrected EQ 'off') OR (Display_not_Poisson_corrected EQ 'OFF') THEN BEGIN
+      IF (POISSON_CORRECTED[I] EQ 0) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_all_aspect_ratios EQ 'off') OR (Display_all_aspect_ratios EQ 'OFF') THEN BEGIN
+      IF (aspect_ratio[i] LT min_aspect_ratio) THEN CONTINUE
+      IF (aspect_ratio[i] GT max_aspect_ratio) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_all_circ EQ 'off') OR (Display_all_circ EQ 'OFF') THEN BEGIN
+      IF (circularity[i] LT min_circ) THEN CONTINUE
+      IF (circularity[i] GT max_circ) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_all_roundness EQ 'off') OR (Display_all_roundness EQ 'OFF') THEN BEGIN
+      IF (roundness[i] LT min_roundness) THEN CONTINUE
+      IF (roundness[i] GT max_roundness) THEN CONTINUE
+    ENDIF
+    
+    
     disp_parts=temporary(disp_parts)+1
     pos_disp[part_cnt] = tot_slice
     tot_slice = tot_slice+scnt[i]+1        ;particle is accepted add slices to the buffer, plus 1 for an empty slice
@@ -113,29 +179,68 @@ FUNCTION WOPRS_QUICKLOOK_GET_IMAGE, STARTING_VARIABLES, FILE_VARIABLES, RUNNING_
     IF (scnt[i] LT 1) THEN CONTINUE ;particle has no slice count, skip it
 
     IF (Display_rejected_particles EQ 'off') OR (Display_rejected_particles EQ 'OFF') THEN BEGIN
-      ;with our data sets we found that the following particle rejections were ok and should be included: 48,104,72,117,82
-;        IF ((ARTIFACT_STATUS[I] NE 1) OR (in_status[I] NE 65)) THEN CONTINUE
-;        IF (num_holes[I] NE 1) THEN CONTINUE
-;        IF (H_or_V[I] NE 1) THEN CONTINUE
-;        IF (ARTIFACT_STATUS[I] NE 1) THEN CONTINUE
-;        IF (DIAM[I] LT 50) THEN CONTINUE
-;        IF (POISSON_CORRECTED[I] NE 1) THEN CONTINUE
-        IF (interarrival_reject[I] NE 1) THEN CONTINUE ;NE 1 for below threshold, NE 0 for above
-    ENDIF
-   
-   ;If auto_reject is equal to 122 then this means that particle has a zero diameter image(in other words it should be a blank space). But that is not always the case. 
-   ;Due to the computer thinking that it is a zero diameter image it has a diameter of not a number (NaN). 
-   ;If we want to display rejected particles and set a minium or maxium diameter past 0 or 15000 then we want to be able to read the diameter of every particle
-   ;The following lines allow use to not display a particle if we are setting a set of diameters and if we are displaying rejected particles. 
-   ;If we do not want to display rejected particles then we will dismiss all paticles that have a auto_reject of 50 or higher thus stopping this issues befor it occurs.   
-   IF (minD GT 0) OR (maxD LT 15000) THEN BEGIN
-    IF (ARTIFACT_STATUS[i] EQ 2) THEN CONTINUE
-   ENDIF
+         artifact_accept = 0
+         for xx = 0,length_asc[1]-1 DO BEGIN ;Loop over all desired artifact statuses
+            IF (ARTIFACT_STATUS[I] EQ artifact_status_choice(xx)) THEN artifact_accept = 1
+         endfor
+         IF (artifact_accept NE 1) THEN CONTINUE
+    ENDIF 
     
-    IF (diam[i] LT minD) THEN CONTINUE        ;particle is too small, skip it
-    IF (diam[i] GT maxD) THEN CONTINUE        ;particle is too large, skip it
+    IF (Display_all_diams EQ 'off') OR (Display_all_diams EQ 'OFF') THEN BEGIN
+      IF (diam[i] LT minD) THEN CONTINUE        ;particle is too small, skip it
+      IF (diam[i] GT maxD) THEN CONTINUE        ;particle is too large, skip it
+    ENDIF
+    
+    IF (Display_interarrival_rejected EQ 'off') OR (Display_interarrival_rejected EQ 'OFF') THEN BEGIN
+      IF (interarrival_reject[I] EQ 1) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_all_in_statuses EQ 'off') OR (Display_all_in_statuses EQ 'OFF') THEN BEGIN
+      in_status_accept = 0
+      for xx = 0,length_gis[1]-1 DO BEGIN ;Loop over all desired artifact statuses
+        IF (in_status[I] EQ good_in_status(xx)) THEN in_status_accept = 1
+      endfor
+      IF (in_status_accept NE 1) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_any_holes EQ 'off') OR (Display_any_holes EQ 'OFF') THEN BEGIN
+      IF (num_holes[i] LT min_holes) THEN CONTINUE  
+      IF (num_holes[i] GT max_holes) THEN CONTINUE 
+    ENDIF
+    
+    IF (Display_any_pieces EQ 'off') OR (Display_any_pieces EQ 'OFF') THEN BEGIN
+      IF (num_pieces[i] LT min_pieces) THEN CONTINUE
+      IF (num_pieces[i] GT max_pieces) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_Poisson_corrected EQ 'off') OR (Display_Poisson_corrected EQ 'OFF') THEN BEGIN
+      IF (POISSON_CORRECTED[I] EQ 1) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_not_Poisson_corrected EQ 'off') OR (Display_not_Poisson_corrected EQ 'OFF') THEN BEGIN
+      IF (POISSON_CORRECTED[I] EQ 0) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_all_aspect_ratios EQ 'off') OR (Display_all_aspect_ratios EQ 'OFF') THEN BEGIN
+      IF (aspect_ratio[i] LT min_aspect_ratio) THEN CONTINUE
+      IF (aspect_ratio[i] GT max_aspect_ratio) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_all_circ EQ 'off') OR (Display_all_circ EQ 'OFF') THEN BEGIN
+      IF (circularity[i] LT min_circ) THEN CONTINUE
+      IF (circularity[i] GT max_circ) THEN CONTINUE
+    ENDIF
+    
+    IF (Display_all_roundness EQ 'off') OR (Display_all_roundness EQ 'OFF') THEN BEGIN
+      IF (roundness[i] LT min_roundness) THEN CONTINUE
+      IF (roundness[i] GT max_roundness) THEN CONTINUE
+    ENDIF
 
     tmp[*,arr_pos:arr_pos+scnt[i]-1] = tmp_data[*,pos[1,i]-scnt[i]+1:pos[1,i],rec[i]-rec[stt]]
+    
+    ;************************************************************
+    tmp[7,arr_pos+scnt[i]] = 219 ;Add divider between the images
+    ;************************************************************
 
     ;for 2DS data, if all diodes are blocked, the cdf file shows everything unblocked....following fixes that
     inds = WHERE( TOTAL(tmp[*,arr_pos:arr_pos+scnt[i]-1],1) EQ 0)

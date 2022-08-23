@@ -7,7 +7,7 @@ function plot_SizeDist
 %% Inputs:
 infilename = {'/home/kshaffe5/test_proc_dir/20170118/SD.20170118.2DS.cdf'};% Must be a cell array (like an array but using curly brackets: {} )
 start_time = 82500; % In seconds from the beginning of the day
-end_time = 83000; % In seconds from the beginning of the day
+end_time = 82501; % In seconds from the beginning of the day
 colors = {'blue','red','black','green','yellow'}; % Must have at least as many colors as infilenames
 x_dimensions = [1e1 1e5];
 y_dimensions = [10e-12 10e3];
@@ -40,8 +40,8 @@ for j = 1:length(probename)
 
     for i=1:length(bin_min)
         avg(i) = nanmean(sd(start_time_index:end_time_index,i,1)); %Take mean over the given time period without including NaN's
-        x_array(i,:)=[bin_min(i),bin_max(i)];
-        y_array(i,:)=[avg(i),avg(i)];
+        x_array(i,:)=[bin_min(i),bin_max(i)]
+        y_array(i,:)=[avg(i),avg(i)]
     
         plot(j) = loglog(x_array(i,:),y_array(i,:),char(colors(j)));
         xlim(x_dimensions);

@@ -188,7 +188,7 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                     % Fix interarrival times if the time variable gets too
                     % large for MATLAB, and the times rollover.
                     if images.int_arrival(kk) < 0
-                        images.int_arrival(kk) = images.int_arrival(kk) +  (2^32 - 1)
+                        images.int_arrival(kk) = images.int_arrival(kk) +  (2^32 - 1);
                     end
                     
                     if(firstpart == 1)
@@ -240,14 +240,13 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                     part_min(kk)   = 0;
                     part_hour(kk)  = 0;
                     time_in_seconds(kk) = part_micro(kk)*(diodesize/(10^3)/170);
-                    %time_in_seconds(kk) = part_micro(kk)/1e6;
 
                     %*************************************
                     % If the image is not the first image in the data set,
                     % calculate the interarrival time by subtracting the
                     % previous particle time (in microseconds) from the
                     % current particle time (in microseconds).
-                    switch channel(kk)
+                   switch channel(kk)
                         case 'H'
                             if last_H == -1
                                 images.int_arrival(kk) = NaN;
@@ -263,12 +262,13 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                                 images.int_arrival(kk) = part_micro(kk) - last_V;
                             end
                             last_V = part_micro(kk);
-                    end
+                   end
+                            
         
                     % Fix interarrival times if the time variable gets too
                     % large for MATLAB, and the times rollover.
                     if images.int_arrival(kk) < 0
-                        images.int_arrival(kk) = images.int_arrival(kk) +  (2^32 - 1)
+                        images.int_arrival(kk) = images.int_arrival(kk) +  (2^32 - 1);
                     end
         
                     %**************************************
@@ -305,7 +305,7 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                      if w > 0
                         images.int_arrival(kk) = time_in_microsecs(kk) - last_inter_arrival;
                      else
-                        images.int_arrival(kk) =  999999999;
+                        images.int_arrival(kk) =  NaN;
                      end
                      
                      last_inter_arrival = time_in_microsecs(kk); % Save the particle time so that we can use it to calculate the next particle's interarrival time
@@ -313,7 +313,7 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                     % Fix interarrival times if the time variable gets too
                     % large for MATLAB, and the times rollover.
                     if images.int_arrival(kk) < 0
-                        images.int_arrival(kk) = images.int_arrival(kk) +  (2^32 - 1)
+                        images.int_arrival(kk) = images.int_arrival(kk) +  (2^32 - 1);
                     end
                 end
                 
@@ -321,50 +321,44 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                 rec_date(kk)=double(handles.year)*10000+double(handles.month)*100+double(handles.day);
                 rec_millisec(kk)=handles.millisec;
                 
-%                 % Set the interarrival reject variable to 1 or 0
-%                 if images.int_arrival(kk) < inter_arrival_threshold
-%                     interarrival_reject(kk) = 1; %Below the threshold
-%                 else
-%                     interarrival_reject(kk) = 0; %Above the threshold
-%                 end
+
                 
                 %% Now we have to go through the three levels of image
                 %% analysis. Images will continue to levels 2 and 3 only if
                 %% they pass our rejection criteria.
                 
-                % Set these variables to -999. They will stay -999 if the
+                % Set these variables to NaN. They will stay NaN if the
                 % particle is rejected.
-                diameter(kk) = -999;
-                aspect_ratio(kk) = -999;
-                poisson_corrected(kk) = -999;
-                number_of_holes(kk) = -999;
-                number_of_pieces(kk) = -999;
-                perimeter(kk) = -999;
-                area(kk) = -999;
-                area_ratio(kk) = -999;
-                orientation(kk) = -999;
+                diameter(kk) = NaN;
+                aspect_ratio(kk) = NaN;
+                poisson_corrected(kk) = NaN;
+                number_of_holes(kk) = NaN;
+                number_of_pieces(kk) = NaN;
+                perimeter(kk) = NaN;
+                area(kk) = NaN;
+                area_ratio(kk) = NaN;
+                orientation(kk) = NaN;
+                roundness(kk) = NaN;
                 circularity(kk) = NaN;
                 
                % Send image to level 1 to determine if the image is
                % to be rejected or not.
                [artifact_status(kk),slicecount(kk),in_status(kk)]=Image_Analysis_Artifact_Reject_Level_1(c);
                    
-                % Pass to level 2 if image has not been identified as an
-                % artifact. We identify and correct Poisson spots in this
-                % level. If the image is not corrected for a Poisson spot,
-                % then the diameter is still -999.
+                % Pass to levels 2 and 3 if image has not been identified as an
+                % artifact. We calculate some useful parameters in level 2,
+                % and then identify and correct for Poisson spots in level
+                % 3.
+
                 if artifact_status(kk)==1
-                    [diameter(kk),poisson_corrected(kk),number_of_holes(kk),number_of_pieces(kk),area(kk),area_ratio(kk)]=Image_Analysis_Distortion_Correction_Level_2(c);
+                    [diameter(kk),number_of_holes(kk),number_of_pieces(kk),perimeter(kk),area(kk),aspect_ratio(kk),roundness(kk),orientation(kk),circularity(kk),filled_image]=Image_Analysis_Calculate_Parameters_Level_2(c,in_status(kk));
+                    [poisson_corrected(kk),diameter(kk)]=Image_Analysis_Poisson_Correction_Level_3(diameter(kk),aspect_ratio(kk),area_ratio(kk),circularity(kk),roundness(kk),filled_image);
                 end
                 
-                % Pass to level 3 if the image has not been rejected. 
-                if artifact_status(kk)==1 
-                    [aspect_ratio(kk),diameter(kk),perimeter(kk),area(kk),area_ratio(kk),orientation(kk),circularity(kk)]=Image_Analysis_Calculate_Parameters_Level_3(c,poisson_corrected(kk),diameter(kk),area(kk),area_ratio(kk));
-                end
-                
-                if diameter(kk) ~= -999
+                if isnan(diameter(kk)) ~= 1
                     diameter(kk) = diameter(kk) * diodesize * 1000; %Convert diameter to microns
                 end
+                
                 
             if probetype == 3
                 start = j + 3;
@@ -386,9 +380,9 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
         netcdf.putVar ( f, varid.Time_in_seconds, wstart, w-wstart+1, time_in_seconds(:) );
         netcdf.putVar ( f, varid.channel, wstart, w-wstart+1, channel);
         netcdf.putVar ( f, varid.position, [0 wstart], [2 w-wstart+1], images.position' );
-%         netcdf.putVar ( f, varid.particle_time, wstart, w-wstart+1, part_hour(:)*10000+part_min(:)*100+part_sec(:) );
-%         netcdf.putVar ( f, varid.millisec, wstart, w-wstart+1, part_mil(:) );
-%         netcdf.putVar ( f, varid.microsec, wstart, w-wstart+1, part_micro(:) );
+         netcdf.putVar ( f, varid.particle_time, wstart, w-wstart+1, part_hour(:)*10000+part_min(:)*100+part_sec(:) );
+         netcdf.putVar ( f, varid.particle_millisec, wstart, w-wstart+1, part_mil(:) );
+         netcdf.putVar ( f, varid.particle_microsec, wstart, w-wstart+1, part_micro(:) );
         netcdf.putVar ( f, varid.parent_rec_num, wstart, w-wstart+1, parent_rec_num );
         netcdf.putVar ( f, varid.inter_arrival, wstart, w-wstart+1, images.int_arrival );
         netcdf.putVar ( f, varid.artifact_status, wstart, w-wstart+1, artifact_status);        
@@ -401,17 +395,16 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
         netcdf.putVar ( f, varid.area, wstart, w-wstart+1, area);
         netcdf.putVar ( f, varid.number_of_holes, wstart, w-wstart+1, number_of_holes);
         netcdf.putVar ( f, varid.number_of_pieces, wstart, w-wstart+1, number_of_pieces);
-        netcdf.putVar ( f, varid.area_ratio, wstart, w-wstart+1, area_ratio);
         netcdf.putVar ( f, varid.in_status, wstart, w-wstart+1, in_status);
         netcdf.putVar ( f, varid.circularity, wstart, w-wstart+1, circularity);
-%        netcdf.putVar ( f, varid.interarrival_reject, wstart, w-wstart+1, interarrival_reject);
+        netcdf.putVar ( f, varid.roundness, wstart, w-wstart+1, roundness);
 
         wstart = w+1;
         kk = 1;
         buffer_end = 1;
         
         % Clear the variables for the next buffer
-        clear rec_time rec_date rec_millisec part_hour part_min part_sec part_mil part_micro parent_rec_num images time_in_seconds in_status circularity slicecount PMSoverload_SPECwkday height artifact_status diameter aspect_ratio poisson_corrected perimeter area area_ratio number_of_holes number_of_pieces orientation channel inter_arrival_H inter_arrival_V
+        clear rec_time rec_date rec_millisec part_hour part_min part_sec part_mil part_micro parent_rec_num images time_in_seconds roundness in_status circularity slicecount PMSoverload_SPECwkday height artifact_status diameter aspect_ratio poisson_corrected perimeter area area_ratio number_of_holes number_of_pieces orientation channel inter_arrival_H inter_arrival_V
         end
         clear images
 end

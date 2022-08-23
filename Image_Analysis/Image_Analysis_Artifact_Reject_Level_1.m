@@ -4,7 +4,7 @@ function [artifact_status,slicecount,in_status]=Image_Analysis_Artifact_Reject_L
 % identify and reject artifacts. Images are rejected as one of four
 % artifact types: shattered particles, streakers, stuck bits, and multiple
 % images. If an image is identified as an artifact, 'artifact_status' is
-% set to a value different than 0, and then we know that the image is to be
+% set to a value greater thn 1, and then we know that the image is to be
 % rejected. Each artifact type corresponds to a different value of
 % 'artifact_status'. If an image is identified as an artifact, it is then
 % returned from this function, and it does not pass to levels 2 or 3. 
@@ -57,6 +57,8 @@ end
 if (shadowed(1) > 0) || (shadowed(end) > 0)
     if (shadowed(1) >= max_y) || (shadowed(end) >= max_y)
         in_status = 'O'; %Center-out
+        artifact_status = 0; % Center-out, so no artifact status
+        return;
     else
         in_status = 'I'; %Center-in
     end
@@ -105,6 +107,8 @@ size_pieces=cellfun(@numel,x2.PixelIdxList);
 total_area=sum(size_pieces);
 sorted=sort(size_pieces);
 test_ratio = sorted(x2.NumObjects) / total_area; % Largest piece divided by total area of all pieces combined
+percent_shadowed = total_area / (slicecount*width) * 100;
+
 
 if x2.NumObjects >1
     % Calculate the combined area of all of the pieces other than the
@@ -117,11 +121,13 @@ if x2.NumObjects >1
     % is smaller than 75 pixels in area, and the largest piece accounts for 
     % less than 80% of the total image area. OR reject if the largest piece
     % is smaller than all of the smaller pieces multiplied by 1.25, and
-    % there are more than 5 pieces.
+    % there are more than 5 pieces. OR reject if less than 25% of the image
+    % is made up of shadowed pixels.
     % This is supposed to reject images with multiple particles, and/or 
     % broken images.
-    if (((total_area < 300) && (sorted(x2.NumObjects) < 75) && (test_ratio < 0.8)) || ((sorted(x2.NumObjects) < smaller_pieces*1.25) && (x2.NumObjects > 5) && (sorted(x2.NumObjects) < 200)))
+    if (((total_area < 300) && (sorted(x2.NumObjects) < 75) && (test_ratio < 0.8)) || ((sorted(x2.NumObjects) < smaller_pieces*1.25) && (x2.NumObjects > 5) && (sorted(x2.NumObjects) < 200)) || percent_shadowed < 25)
         artifact_status=6; 
+        return;
     end
 end
 

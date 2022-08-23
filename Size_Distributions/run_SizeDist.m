@@ -43,18 +43,17 @@ switch probe
             return;
         end
         
-        % Read in the artifact statuses to see how many there are. This
-        % needs to be done so that we can set one of the dimension sizes in
-        % Generate_SizeDist. By reading this in here, artifact statuses can
-        % be added, without affecting the size distribution code.
-        PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
-        artifacts = netcdf.getVar(PROC_file,netcdf.inqVarID(PROC_file,'artifact_status'));
-        number_of_reject_types = max(artifacts);
+%         % Read in the artifact statuses to see how many there are. This
+%         % needs to be done so that we can set one of the dimension sizes in
+%         % Generate_SizeDist. By reading this in here, artifact statuses can
+%         % be added, without affecting the size distribution code.
+         PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
+         num_rejects = netcdf.getAtt(PROC_file, netcdf.inqVarID(PROC_file,'artifact_status'),'Number of artifact statuses');
         
         inFile = [PROC_directory,files(1).name];
         proc_pos = find(inFile == 'P',1,'last');
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.2DS.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DS');    
+        Generate_SizeDist(files,outFile,tas,floor(timehhmmss),'2DS',num_rejects);    
     case {'HVPS','hvps'}
         files = dir([PROC_directory,'PROC.*.HVPS.cdf']);
         filenums = length(files);
@@ -67,9 +66,8 @@ switch probe
         % needs to be done so that we can set one of the dimension sizes in
         % Generate_SizeDist. By reading this in here, artifact statuses can
         % be added, without affecting the size distribution code.
-        PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
-        artifacts = netcdf.getVar(PROC_file,netcdf.inqVarID(PROC_file,'artifact_status'));
-        number_of_reject_types = max(artifacts) + 1;
+         PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
+         num_rejects = netcdf.getAtt(PROC_file, netcdf.inqVarID(PROC_file,'artifact_status'),'Number of artifact statuses');
         
         inFile = [PROC_directory,files(1).name];
         proc_pos = find(inFile == 'P');
@@ -79,7 +77,7 @@ switch probe
             proc_pos = proc_pos(end);
         end
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.HVPS.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'HVPS');
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'HVPS',num_rejects);
         
     case {'CIPG','cip','cipg','CIP'}
 
@@ -94,9 +92,8 @@ switch probe
         % needs to be done so that we can set one of the dimension sizes in
         % Generate_SizeDist. By reading this in here, artifact statuses can
         % be added, without affecting the size distribution code.
-        PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
-        artifacts = netcdf.getVar(PROC_file,netcdf.inqVarID(PROC_file,'artifact_status'));
-        number_of_reject_types = max(artifacts) + 1;
+         PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
+         num_rejects = netcdf.getAtt(PROC_file, netcdf.inqVarID(PROC_file,'artifact_status'),'Number of artifact statuses');
         
         inFile = [PROC_directory,files(1).name];
         proc_pos = find(inFile == 'P');
@@ -106,7 +103,7 @@ switch probe
             proc_pos = proc_pos(end);
         end
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.CIP.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'CIP');
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'CIP',num_rejects);
 
     case {'2DP','2dp'}
 
@@ -121,9 +118,8 @@ switch probe
         % needs to be done so that we can set one of the dimension sizes in
         % Generate_SizeDist. By reading this in here, artifact statuses can
         % be added, without affecting the size distribution code.
-        PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
-        artifacts = netcdf.getVar(PROC_file,netcdf.inqVarID(PROC_file,'artifact_status'));
-        number_of_reject_types = max(artifacts) + 1;
+         PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
+         num_rejects = netcdf.getAtt(PROC_file, netcdf.inqVarID(PROC_file,'artifact_status'),'Number of artifact statuses');
         
         inFile = [PROC_directory,files(1).name];
         proc_pos = find(inFile == 'P');
@@ -133,7 +129,7 @@ switch probe
             proc_pos = proc_pos(end);
         end
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.2DP.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DP');
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DP',num_rejects);
         
     case {'2DC','2dc'}
         
@@ -148,14 +144,13 @@ switch probe
         % needs to be done so that we can set one of the dimension sizes in
         % Generate_SizeDist. By reading this in here, artifact statuses can
         % be added, without affecting the size distribution code.
-        PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
-        artifacts = netcdf.getVar(PROC_file,netcdf.inqVarID(PROC_file,'artifact_status'));
-        number_of_reject_types = max(artifacts) + 1;
+         PROC_file = netcdf.open([PROC_directory,files(1).name],'nowrite');
+         num_rejects = netcdf.getAtt(PROC_file, netcdf.inqVarID(PROC_file,'artifact_status'),'Number of artifact statuses');
         
         inFile = [PROC_directory,files(1).name];
         proc_pos = find(inFile == 'P',1,'last');
         outFile = [inFile(1:proc_pos-1),'SD.',date,'.2DC.cdf']
-        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DC');
+        Generate_SizeDist(files,number_of_reject_types,outFile,tas,floor(timehhmmss),'2DC',num_rejects);
         
 end
 

@@ -1,14 +1,12 @@
-function [area_ratio_bin_edges,num_ar_bins,In_status,in_status_value,diam_bin_edges,num_diam_bins,mid_bin_diams]=setup_SizeDist(probename)
+function [roundness_bin_edges,num_round_bins,In_status,in_status_value,diam_bin_edges,num_diam_bins,mid_bin_diams]=setup_SizeDist(probename)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function sets all the bin edges for generating size distributions.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %% All probetypes:
-area_ratio_bin_edges= [0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1];
+roundness_bin_edges= [0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1];
 
 %The following should have a value of ‘center-in’ or ‘all-in’
 In_status = 'center-in';
-
 
 %% Probetype-specific:
 switch probename
@@ -43,7 +41,7 @@ switch In_status
         return;
 end
 
-num_ar_bins = length(area_ratio_bin_edges) -1;
+num_round_bins = length(roundness_bin_edges) -1;
 num_diam_bins = length(diam_bin_edges) -1;
 
 for i=1:num_diam_bins

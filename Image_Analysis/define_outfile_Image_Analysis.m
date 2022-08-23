@@ -56,8 +56,8 @@ netcdf.putAtt(f, varid.inter_arrival,'long_name','Time between the previous part
 netcdf.putAtt(f, varid.inter_arrival,'units','microseconds');
 varid.artifact_status = netcdf.defVar(f,'artifact_status','double',dimid.time); 
 netcdf.putAtt(f, varid.artifact_status,'long_name','Value corresponding to rejection criteria that failed the image. 1 = not rejected, >1 = rejected');
-netcdf.putAtt(f, varid.artifact_status,'Number of artifact statuses',6);
-netcdf.putAtt(f, varid.artifact_status,'Artifact status key','1 = not rejected, 2 = no pixels shadowed, 3 = shattered particle, 4 = streaker, 5 = stuck bit, 6 = sliced image, 7 = multiple particles or broken image. Consult WOPRS github wiki for more info');
+netcdf.putAtt(f, varid.artifact_status,'Number of artifact statuses',8);
+netcdf.putAtt(f, varid.artifact_status,'Artifact status key','0 = center_out (no artifact status), 1 = not rejected, 2 = no pixels shadowed, 3 = shattered particle, 4 = streaker, 5 = stuck bit, 6 = sliced image, 7 = multiple particles or broken image. Consult WOPRS github wiki for more info');
 varid.diameter = netcdf.defVar(f,'diameter','double',dimid.time);
 netcdf.putAtt(f, varid.diameter,'long_name','Diameter of the smallest enclosing circle (aka the maximum diameter)');
 netcdf.putAtt(f, varid.diameter,'units','micrometers');
@@ -85,18 +85,18 @@ netcdf.putAtt(f, varid.number_of_holes,'units','unitless');
 varid.number_of_pieces = netcdf.defVar(f,'number_of_pieces','double',dimid.time);
 netcdf.putAtt(f, varid.number_of_pieces,'long_name','Number of pieces in the image');
 netcdf.putAtt(f, varid.number_of_pieces,'units','unitless');
-varid.area_ratio = netcdf.defVar(f,'area_ratio','double',dimid.time);
-netcdf.putAtt(f, varid.area_ratio,'long_name','Area / area of the smallest enclosing circle. 1 = perfect circle, 0 = perfectly noncircular, -1=poisson corrected');
-netcdf.putAtt(f, varid.area_ratio,'units','unitless');
 varid.in_status = netcdf.defVar(f,'in_status','char',dimid.time);
 netcdf.putAtt(f, varid.in_status,'long_name','How much of the particle is shown in the image. A = all in, I = center in, O = center out');
 netcdf.putAtt(f, varid.in_status,'units','Not applicable');
 varid.circularity = netcdf.defVar(f,'circularity','double',dimid.time);
-netcdf.putAtt(f, varid.in_status,'long_name','Calculated using 4*area*pi / (perimeter^2). Perfect circle = 1. Only calculated for images above a certain size, all others are NaN.');
-netcdf.putAtt(f, varid.in_status,'units','unitless');
+netcdf.putAtt(f, varid.circularity,'long_name','Calculated using 4*area*pi / (perimeter^2). Perfect circle = 1.');
+netcdf.putAtt(f, varid.circularity,'units','unitless');
 varid.interarrival_reject = netcdf.defVar(f,'interarrival_reject','double',dimid.time);
 netcdf.putAtt(f, varid.interarrival_reject,'long_name',['Flags particles that have an interarrival time less than the threshold value of ',inter_arrival_threshold, ' microseconds. 1 = below the threshold, 0 = above']);
 netcdf.putAtt(f, varid.interarrival_reject,'units','Not applicable');
+varid.roundness = netcdf.defVar(f,'roundness','double',dimid.time);
+netcdf.putAtt(f, varid.roundness,'long_name','Calculated using (4*area) / (pi*diameter^2). Perfect circle = 1.');
+netcdf.putAtt(f, varid.roundness,'units','unitless');
 netcdf.endDef(f)
 
 end

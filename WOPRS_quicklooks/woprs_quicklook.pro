@@ -13,6 +13,7 @@ file_directory='/home/kshaffe5/Thesis/test_files/'
 ;The program will pause before a file is deleted and show a message that a file is about to be deleted.
 ;If you have 'OFF' selected and a file with a matching name exist then the program will show a message and then change the file name to include (#) at the end of the file name
 ;OFF=no files will be deleted, ON=files will be deleted
+
 DELETE_FILE= 'ON' 
 
 
@@ -58,7 +59,7 @@ WHILE (FILE_RUN LT RECORD_COUNT) DO BEGIN
   IF INPUT_TYPE EQ 'FILE' OR INPUT_TYPE EQ 'file' THEN BEGIN 
     FILE_RUN=STARTING_VARIABLES.FIELD13
     RECORD_COUNT=STARTING_VARIABLES.FIELD14
-    INFILE=STARTING_VARIABLES.FIELD15
+    INFILE=STARTING_VARIABLES.FIELD15 
   ENDIF 
   
   ;If this line has the keyword skip asssiated with the last collum in the .csv then the program will skip over this line. 
@@ -209,6 +210,7 @@ WHILE (FILE_RUN LT RECORD_COUNT) DO BEGIN
     i=image(transpose(LONG(data_record[*,*])), /current, POSITION=[0,A,1,B], RGB_TABLE=38,  $
       TITLE= STRTRIM(string(time_dis_stt),2) + '-' + STRTRIM(string(time_dis_stp),2) + ' UTC', $
       Font_Size=45)
+      
   
     ;resets variables to allow for another loop
     tot_slice=0
