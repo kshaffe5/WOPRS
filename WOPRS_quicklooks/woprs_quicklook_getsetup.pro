@@ -3,16 +3,16 @@ FUNCTION WOPRS_QUICKLOOK_GETSETUP, INPUT_TYPE, FILE_RUN, RECORD_COUNT, INFILE, L
 ;*********************************************************************************************************************************************
 ;if you are putting in custom data please use the section below to input all the varaibles. 
 IF(INPUT_TYPE EQ 'CUSTOM') OR (INPUT_TYPE EQ 'custom')THEN BEGIN 
-  DIMG_file= '/home/kshaffe5/test_proc_dir/20160825/DIMG.160825143800.2DS.cdf' ;ex. '/kingair_data/hcpi20/OAP_processed/20200811/DIMG.200811193926.2DS.H.cdf'
-  PROC_file= '/home/kshaffe5/test_proc_dir/20160825/PROC.160825143800.2DS.cdf' ;ex  '/kingair_data/hcpi20/OAP_processed/20200811/PROC.200811193926.2DS.H.cdf'
+  DIMG_file= '/home/username/20160825/DIMG.160825143800.2DS.cdf' ;ex. '/kingair_data/hcpi20/OAP_processed/20200811/DIMG.200811193926.2DS.H.cdf'
+  PROC_file= '/home/username/20160825/PROC.160825143800.2DS.cdf' ;ex  '/kingair_data/hcpi20/OAP_processed/20200811/PROC.200811193926.2DS.H.cdf'
   DATE= 20160825;ex. 20200811
   Start_time_sec= 56292;these need to be in sec, ex. 72936
   End_time_sec=  56305;make sure start time is less then end time
-  Output_file_path= '/home/kshaffe5' ;the actuall name of the file will set at the end of the file automaticaly. We need the start/end times in hhmmss first.
+  Output_file_path= '/home/username' ;the actuall name of the file will set at the end of the file automaticaly. We need the start/end times in hhmmss first.
   Output_File_type= '.pdf' ; select the file type you would like your saved file to be. '.pdf' , '.png' , etc.
 
   ;SET ANY FILTERS BELOW. IF EVERYTHING IS SET TO 'ON', THEN NO FILTERS ARE APPLIED
-  Display_rejected_particles= 'on' ; ON= rejected particles ARE SHOWN, OFF=rejected particles ARE NOT SHOWN; assign the desired artifact statuses below
+  Display_rejected_particles= 'off' ; ON= rejected particles ARE SHOWN, OFF=rejected particles ARE NOT SHOWN; assign the desired artifact statuses below
   good_artifacts = [3, 4, 5, 6]
   Display_all_diams = 'on'
   minD= 0  ;minimum particle diameter in microns, default is 0. -999 includes

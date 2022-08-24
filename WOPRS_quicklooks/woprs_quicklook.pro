@@ -1,14 +1,7 @@
 PRO WOPRS_QUICKLOOK
-;User input is needed for the INPUT_TYPE, file-directory and DELETE_FILE
-;would you like to input custom data or read data from a .CSV file
-;IF A CSV FILE IS BEING USED PLEASE HAVE THE ORDER OF THE COLLUMS AS FOLLOWS
-;PROC_FILE, DIMG_FILE, DATE, START_TIME_SEC, END_TIME_SEC, Display_particles_touching_edge, Display_rejected_particles, minD, maxD, OUTPUT_FILE_PATH, OUTPUT_FILE_TYPE(pdf or png), READ_ROW(SKIP OR RUN)
-;if you are doing a custom input, please input your variables into the WOPRS_quicklook_GETSETUP function
-INPUT_TYPE='custom' ; the two options for this varaible are 'file' or 'custom'. If file is selected FILE you will be promptED to pic a .csv file
-;File_directory is where the diolg box in WOPRS_quicklook_GETSETUP should be looking. this can be a broad search or narrow. 
-;It can be left blank if the directory is not know or if INPUT_TYPE= 'custom' 
-file_directory='/home/kshaffe5/Thesis/test_files/'
-;!!!!!!!!
+
+INPUT_TYPE='custom' ;Ignore, this is an artifact from a previous version of this program
+
 ;If the DELETE_FILE feature is on, and the output_file_final matches an existing file then the file will be deleted to allow for a new one
 ;The program will pause before a file is deleted and show a message that a file is about to be deleted.
 ;If you have 'OFF' selected and a file with a matching name exist then the program will show a message and then change the file name to include (#) at the end of the file name
@@ -105,6 +98,8 @@ WHILE (FILE_RUN LT RECORD_COUNT) DO BEGIN
   Display_rejected_particles=STARTING_VARIABLES.FIELD06
   minD=STARTING_VARIABLES.FIELD07
   maxD=STARTING_VARIABLES.FIELD08
+  good_artifacts=STARTING_VARIABLES.FIELD11
+  Display_all_diams=STARTING_VARIABLES.FIELD14
   
   START_TIME=FILE_VARIABLES.START_TIME
   END_TIME=FILE_VARIABLES.END_TIME
@@ -118,16 +113,20 @@ WHILE (FILE_RUN LT RECORD_COUNT) DO BEGIN
   n=text(.97,.5, position=[0,.975,.001,.98], font_size= 25, 'DATE-' + STRTRIM(string(Date),2))
   n=text(.97,.5, position=[0,.965,.001,.97], font_size= 25, 'Times in seconds (start-end) ' + STRTRIM(string(Start_time_sec),2) +'-'+ STRTRIM(string(End_time_sec),2) + ' UTC')
   n=text(.97,.5, position=[0,.955,.001,.96], font_size= 25, 'Times in hhmmss (start-end) ' + STRTRIM(string(Start_time),2) + '-' + STRTRIM(string(End_time),2) + ' UTC')
-  n=text(.97,.5, position=[0,.945,.001,.95], font_size= 25, 'Diameter in microns (min-max)= ' + STRTRIM(string(minD),2) + '-' + STRTRIM(string(maxD),2))
+  
+  IF (Display_all_diams EQ 'OFF') OR (Display_all_diams EQ 'off') THEN BEGIN
+    n=text(.97,.5, position=[0,.945,.001,.95], font_size= 25, 'Diameter in microns (min-max)= ' + STRTRIM(string(minD),2) + '-' + STRTRIM(string(maxD),2))
+  ENDIF
+  IF (Display_all_diams EQ 'ON') OR (Display_all_diams EQ 'on') THEN BEGIN
+    n=text(.97,.5, position=[0,.945,.001,.95], font_size= 25, 'Displaying all diameters')
+  ENDIF
 
   IF (Display_rejected_particles EQ 'OFF') OR (Display_rejected_particles EQ 'off') THEN BEGIN
-    n=text(.97,.5, position=[0,.925,.001,.93], font_size= 25, 'Only displaying accepted particles (Criteria= (artifact_status[particle]= 0))')
+    n=text(.97,.5, position=[0,.935,.001,.94], font_size= 25, 'Only displaying the desired artifact statuses')
   ENDIF
   IF (Display_rejected_particles EQ 'ON') OR (Display_rejected_particles EQ 'on') THEN BEGIN
-     n=text(.97,.5, position=[0,.925,.001,.93], font_size= 25, 'Displaying both accepted and rejected particles') 
+     n=text(.97,.5, position=[0,.935,.001,.94], font_size= 25, 'Displaying both accepted and rejected particles') 
   ENDIF  
-  n=text(.97,.5, position=[0,.915,.001,.92], font_size= 25,  FONT_STYLE='Italic', 'All particles are displayed when diameters are set to -999-15000, accepted, and rejected particles are displayed')
-  
   
   ;If the error_variable is on then there is an issue with the start and end times and how they match up with the proc time file's times
   ;A statement is created and displayed on the output file to tell the user what the issue was with there times. 
