@@ -59,8 +59,8 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
         handles.tas         = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'tas'),i-1,1);
     elseif probetype ==2 %SPEC
         handles.wkday       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'wkday'),i-1,1);
-%     else %CIP
-%         handles.empty       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'empty'),i-1,1);
+    else %CIP
+        handles.empty       = netcdf.getVar(handles.f,netcdf.inqVarID(handles.f,'empty'),i-1,1);
     end
      if mod(i,10000) == 0
         [num2str(i),'/',num2str(handles.img_count)]
@@ -136,7 +136,13 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                     end
                     % Read in the first bit of the timing word, where the H
                     % or V flag is located.
-                    H_V(kk) = str2double(test_channel(j+1,1));
+                    size_test_channel=size(test_channel);
+                    if j < size_test_channel(1)-1
+                        H_V(kk) = str2double(test_channel(j+1,1));
+                    else
+                        disp('bad')
+                        H_K(kk) = 1;
+                    end
                     % H=0, V=1
                     switch H_V(kk)
                         case 0
@@ -354,6 +360,9 @@ for i=((n-1)*nEvery+1):min(n*nEvery,handles.img_count)
                     [diameter(kk),number_of_holes(kk),number_of_pieces(kk),perimeter(kk),area(kk),aspect_ratio(kk),roundness(kk),orientation(kk),circularity(kk),filled_image]=Image_Analysis_Calculate_Parameters_Level_2(c,in_status(kk));
                     [poisson_corrected(kk),diameter(kk)]=Image_Analysis_Poisson_Correction_Level_3(diameter(kk),aspect_ratio(kk),area_ratio(kk),circularity(kk),roundness(kk),filled_image);
                 end
+                
+                perimeter(kk) = perimeter(kk) * diodesize *1000;
+                area(kk) = area(kk) * (diodesize*1000)^2;
                 
                 if isnan(diameter(kk)) ~= 1
                     diameter(kk) = diameter(kk) * diodesize * 1000; %Convert diameter to microns

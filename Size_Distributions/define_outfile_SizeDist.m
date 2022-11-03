@@ -1,4 +1,4 @@
-function [f,varid]=define_outfile_SizeDist(probename,num_rejects,timehhmmss,outfile,num_round_bins,num_diam_bins,In_status)
+function [f,varid]=define_outfile_SizeDist(probename,num_rejects,timehhmmss,outfile,num_round_bins,num_diam_bins,In_status,num_aspect_ratio_bins)
 
 %% Create outfile and define variables
 f = netcdf.create(outfile, 'clobber');
@@ -6,6 +6,7 @@ dimid0 = netcdf.defDim(f,'time',length(timehhmmss));
 dimid1 = netcdf.defDim(f,'bin_count',num_diam_bins);
 dimid2 = netcdf.defDim(f,'reject_status',num_rejects);
 dimid3 = netcdf.defDim(f,'roundness_bin_count',num_round_bins);
+dimid4 = netcdf.defDim(f,'aspect_ratio_bin_count',num_aspect_ratio_bins);
 
 netcdf.putAtt(f, netcdf.getConstant('NC_GLOBAL'),'In_status',In_status);
 
@@ -27,9 +28,12 @@ netcdf.putAtt(f, varid.bin_max,'units','micrometers');
 varid.bin_mid = netcdf.defVar(f,'bin_mid','double',dimid1);
 netcdf.putAtt(f, varid.bin_mid,'long_name','Midpoint of each bin');
 netcdf.putAtt(f, varid.bin_mid,'units','micrometers');
-varid.Area_ratio_counts = netcdf.defVar(f,'Roundness_counts','double',[dimid0 dimid3]);
-netcdf.putAtt(f, varid.Area_ratio_counts,'long_name','Binwise counts of roundness');
-netcdf.putAtt(f, varid.Area_ratio_counts,'units','unitless');
+varid.roundness_counts = netcdf.defVar(f,'roundness_counts','double',[dimid0 dimid3]);
+netcdf.putAtt(f, varid.roundness_counts,'long_name','Binwise counts of roundness. Only all-in images have roundness values');
+netcdf.putAtt(f, varid.roundness_counts,'units','unitless');
+varid.aspect_ratio_counts = netcdf.defVar(f,'aspect_ratio_counts','double',[dimid0 dimid4]);
+netcdf.putAtt(f, varid.aspect_ratio_counts,'long_name','Binwise counts of aspect ratio. Only all-in images have aspect ratio values');
+netcdf.putAtt(f, varid.aspect_ratio_counts,'units','unitless');
 varid.total_reject_counts = netcdf.defVar(f,'total_reject_counts','double',[dimid0 dimid2]);
 netcdf.putAtt(f, varid.total_reject_counts,'long_name','Number of rejected images, sorted by artifact status');
 netcdf.putAtt(f, varid.total_reject_counts,'units','unitless');

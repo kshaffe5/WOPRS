@@ -38,7 +38,7 @@ switch probename
 
         diodesize = 0.150;  % Size of diode in millimeters
         diodenum  = 128;  % Number of diodes
-        armdist = 161; % Distance between probearms in millimeters
+        armdist = 168; % Distance between probearms in millimeters
         wavelength = 785*1e-6;
         
         probetype=2;

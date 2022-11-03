@@ -32,6 +32,7 @@ FUNCTION WOPRS_QUICKLOOK_GET_IMAGE, STARTING_VARIABLES, FILE_VARIABLES, RUNNING_
   Display_all_roundness = STARTING_VARIABLES.FIELD30
   max_roundness = STARTING_VARIABLES.FIELD31
   min_roundness = STARTING_VARIABLES.FIELD32
+  Display_markings_between_images = STARTING_VARIABLES.FIELD33
   
   
   ;The next variable is from FILE_VARAIBLES
@@ -45,7 +46,6 @@ FUNCTION WOPRS_QUICKLOOK_GET_IMAGE, STARTING_VARIABLES, FILE_VARIABLES, RUNNING_
   ARTIFACT_STATUS=RUNNING_VARIABLES.ARTIFACT_STATUS
   roundness=RUNNING_VARIABLES.roundness
   interarrival_reject=RUNNING_VARIABLES.interarrival_reject
-  roundness=RUNNING_VARIABLES.area_ratio
   aspect_ratio=RUNNING_VARIABLES.aspect_ratio
   circularity=RUNNING_VARIABLES.circularity
   channel=RUNNING_VARIABLES.channel
@@ -238,9 +238,11 @@ FUNCTION WOPRS_QUICKLOOK_GET_IMAGE, STARTING_VARIABLES, FILE_VARIABLES, RUNNING_
 
     tmp[*,arr_pos:arr_pos+scnt[i]-1] = tmp_data[*,pos[1,i]-scnt[i]+1:pos[1,i],rec[i]-rec[stt]]
     
+    IF (Display_markings_between_images EQ 'on') OR (Display_markings_between_images EQ 'ON') THEN BEGIN
     ;************************************************************
-    tmp[7,arr_pos+scnt[i]] = 219 ;Add divider between the images
+      tmp[7,arr_pos+scnt[i]] = 219 ;Add divider between the images
     ;************************************************************
+    ENDIF
 
     ;for 2DS data, if all diodes are blocked, the cdf file shows everything unblocked....following fixes that
     inds = WHERE( TOTAL(tmp[*,arr_pos:arr_pos+scnt[i]-1],1) EQ 0)

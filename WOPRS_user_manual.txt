@@ -1,6 +1,8 @@
 ﻿*******Welcome to the University of Wyoming OAP Processing Software (WOPRS)!*******
 
-WOPRS is designed to take files directly from the OAPs aboard the UWKA and produce usable products such as particle characteristics and size distributions. WOPRS is broken down into 3 basic steps: 1) OAP_to_NETCDF, 2) Image_Analysis, and 3) Size_Distributions. OAP_to_NETCDF translates the raw data from the probes into a Netcdf file that is almost entirely homogeneous across probe types. Image_Analysis takes the images from the file generated in OAP_to_NETCDF and does 3 things: 1) Test images against various criteria and reject images that fail, 2) Correct for  distortions in non-rejected images which have a non-physical deformity, and 3) Calculate a variety of parameters for non-rejected images. Finally Size_Distributions, as the name suggests, generates size distributions.
+WOPRS is designed to take raw files directly from the 2DS, HVPS, 2DP, 2DC, or CIPG  and produce a file with the prefix ‘DIMG’ which contains image data, a file with the prefix ‘PROC’ which contains image characteristics, and a file with the prefix ‘SD’ which contains size distributions.
+
+WOPRS is broken down into 3 basic steps: 1) OAP_to_NETCDF, 2) Image_Analysis, and 3) Size_Distributions. OAP_to_NETCDF translates the raw data from the probes into a Netcdf file that is almost entirely homogeneous across probe types. Image_Analysis takes the images from the file generated in OAP_to_NETCDF and does 3 things: 1) Test images against various criteria and reject images that fail, 2) Correct for  distortions in non-rejected images which have a non-physical deformity, and 3) Calculate a variety of parameters for non-rejected images. Finally Size_Distributions, as the name suggests, generates size distributions.
 
 Instructions for running WOPRS:
 1) Call run_OAP_to_NETCDF with the following inputs:
@@ -12,7 +14,11 @@ For the CIP, the call should look something like this: run_OAP_to_NETCDF(‘/kin
 
 For all other probetypes outfilename can be left blank, so the call would look something like this: run_OAP_to_NETCDF(‘/kingair_data/pacmice16/2DS/20160818/base160818205231.2DS’,’2DS’). That call would produce the file: ‘/kingair_data/pacmice16/2DS/20160818/DIMG.2016160818205231.2DS.cdf’
 
-2) Call run_Image_Analysis with the following inputs:
+2)  Modify setup_Image_Analysis (optional)
+
+The setup_Image_Analysis file is stored in the Image_Analysis folder. User can edit the interarrival time threshold for flagging shattered particles, as well as probe-specific information.
+
+3) Call run_Image_Analysis with the following inputs:
 Infilename
 Probetype ('2DS','HVPS','etc...)
 nChucks (max of 8, refers to number of workers during parallel processing)
@@ -20,11 +26,11 @@ Threshold (only for cip, argument is ignored if not cip)
 
 The call should look something like this: run_Image_Analysis(‘/kingair_data/pacmice16/2DS/20160818/DIMG.2016160818205231.2DS.cdf’,’2DS’,8,50). That call would produce the file: ‘/kingair_data/pacmice16/2DS/20160818/PROC.2016160818205231.2DS.cdf’
 
-3) Modify setup_SizeDist (optional)
+4) Modify setup_SizeDist (optional)
 
 The setup_SizeDist file is stored in the Size_Distributions folder. This file contains information critical to generating size distributions, such as probe arm distance and bin edges. If no changes are made to this file, then the defaults will be used.
 
-4) Call run_SizeDist with the following inputs:
+5) Call run_SizeDist with the following inputs:
 ncfile
 PROC_directory
 probe

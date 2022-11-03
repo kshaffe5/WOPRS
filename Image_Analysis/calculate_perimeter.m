@@ -62,7 +62,7 @@ for i=1:n_slices
                 end
             end
             
-            % Test
+            % Calculate perimeter based on unshadowed edges
             if unshadowed_edges == 0
                 perimeter = perimeter + 0;
             elseif unshadowed_edges == 1

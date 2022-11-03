@@ -37,8 +37,6 @@ netcdf.putAtt(f, varid.position,'long_name','Position in the buffer in number of
 netcdf.putAtt(f, varid.position,'units','Not applicable');
 
 varid.particle_time  = netcdf.defVar(f,'particle_time','double',dimid.time);
-netcdf.putAtt(f, varid.particle_time,'long_name','Day, month, and year at the start of the flight');
-netcdf.putAtt(f, varid.particle_time,'units','Not applicable');
 varid.particle_millisec  = netcdf.defVar(f,'particle_millisec','short',dimid.time);
 varid.particle_microsec  = netcdf.defVar(f,'particle_microsec','double',dimid.time);
 
@@ -74,11 +72,11 @@ varid.poisson_corrected = netcdf.defVar(f,'poisson_corrected','double',dimid.tim
 netcdf.putAtt(f, varid.poisson_corrected,'long_name','1 = poisson corrected, 0 = not poisson corrected');
 netcdf.putAtt(f, varid.poisson_corrected,'units','Not applicable');
 varid.perimeter = netcdf.defVar(f,'perimeter','double',dimid.time);
-netcdf.putAtt(f, varid.perimeter,'long_name','Distance around the boundary of the image measured in pixels');
-netcdf.putAtt(f, varid.perimeter,'units','unitless');
+netcdf.putAtt(f, varid.perimeter,'long_name','Distance around the boundary of the image');
+netcdf.putAtt(f, varid.perimeter,'units','micrometers');
 varid.area = netcdf.defVar(f,'area','double',dimid.time);
 netcdf.putAtt(f, varid.area,'long_name','Actual number of pixels in the image');
-netcdf.putAtt(f, varid.area,'units','unitless');
+netcdf.putAtt(f, varid.area,'units','micrometers^2');
 varid.number_of_holes = netcdf.defVar(f,'number_of_holes','double',dimid.time);
 netcdf.putAtt(f, varid.number_of_holes,'long_name','Number of holes in the image');
 netcdf.putAtt(f, varid.number_of_holes,'units','unitless');

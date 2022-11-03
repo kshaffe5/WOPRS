@@ -47,6 +47,8 @@ if in_status ~= 'A'
     circularity = NaN;
     roundness = NaN;
     orientation = NaN;
+    perimeter = NaN;
+    area = NaN;
 else
     aspect_ratio = max_length / min_length;
     circularity = (4*pi*area) / (perimeter^2);
